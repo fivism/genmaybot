@@ -1,4 +1,3 @@
-import PythonMagick
 from urllib.parse import urlparse
 
 

@@ -1,4 +1,3 @@
-from PIL import Image
 from urllib.parse import urlparse
 
 

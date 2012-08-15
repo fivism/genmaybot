@@ -77,8 +77,9 @@ def bbnet(self, e):
     for n in range(0, rand):
         e.output = "%s%s" % (e.output, "l")
         e.output = "%s%s" % (e.output, "oo" if random.randint(0, 5) == 0 else "o")
-
-    return e
+    
+    e.output = "%s %s" % (e.output, e.output.__len__())
+    return e 
 
 bbnet.command = "!bbnet"
 

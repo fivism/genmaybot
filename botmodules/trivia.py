@@ -188,12 +188,12 @@ def answer_grabber(self, e):
 
             tmr = "{:.2f}".format(time.time() - trivia.qtimestamp)
 
-            e.output = "Winrar! {} [ ${} in {} ] got the answer: {} in {} seconds".format(
+            e.output = "Winrar in {} seconds! {} [ ${} in {} ] got the answer: {}".format(
+                                                                                        tmr,
                                                                                         e.nick,
                                                                                         trivia.points[e.nick][0],
                                                                                         trivia.points[e.nick][1],
-                                                                                        trivia.answer,
-                                                                                        tmr
+                                                                                        trivia.answer
                                                                                         )
             self.botSay(e)
 

@@ -5,6 +5,7 @@ import threading
 import random
 import re
 
+
 def ask_question():
     conn = sqlite3.connect("clues.db")
     c = conn.cursor()
@@ -18,29 +19,46 @@ def ask_question():
                       WHERE clues.id = (?)", [clueid]).fetchone()
 
     print(clue)
-    #rivia.answer = clue[3]
     trivia.answer = clean_answer(clue[3])
     hint = ""
-    for chr in trivia.answer:
-        hint = hint + re.sub(r'[a-zA-Z0-9]', "*", chr)
+    for char in trivia.answer:
+        hint = hint + re.sub(r'[a-zA-Z0-9]', "*", char)
     trivia.hint = hint
 
     trivia.value = int(str(clue[0]).replace(",", ""))
     if trivia.value == 0:
-       trivia.value = 5000
-    trivia.question = "Question: ${}. [ {} ] {} \nHint: {}".format(trivia.value, clue[1], clue[2], hint)
+        trivia.value = 5000
+    trivia.questions_asked += 1
+    trivia.question = "Question {}: ${}. [ {} ] {} \nHint: {}".format(
+                                                                     trivia.questions_asked,
+                                                                     trivia.value,
+                                                                     clue[1],
+                                                                     clue[2],
+                                                                     hint,
+                                                                     )
     trivia.e.output = trivia.question
     trivia.gameon = True
+    trivia.qtimestamp = time.time()
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(trivia.qtime, failed_answer)
     trivia.timer.start()
 
+
 def question_time(self, e):
     try:
-       trivia.qtime = int(e.input)
+        trivia.qtime = int(e.input)
     except:
-       pass
+        pass
 question_time.command = "!qtime"
+
+
+def question_delay(self, e):
+    try:
+        trivia.qdelay = int(e.input)
+    except:
+        pass
+question_delay.command = "!qdelay"
+
 
 def failed_answer():
     e = trivia.e
@@ -49,18 +67,20 @@ def failed_answer():
     e.output = "FAIL! no one guessed the answer: {}".format(trivia.answer)
     trivia.bot.botSay(e)
     if not trivia.stoptrivia:
-        trivia.qtimer=threading.Timer(10, ask_question)
+        trivia.qtimer = threading.Timer(trivia.qdelay, ask_question)
         trivia.qtimer.start()
 
 
 def play_trivia(self, e):
-#    if trivia.gameon == True:
-#       e.output = "Trivia is already running"
-#       return e
+    if trivia.gameon:
+        e.output = "Trivia is already running"
+        return e
     trivia.bot = self
     trivia.e = e
+
     e.output = "Trivia started! Use !strivia to stop"
-    trivia.points = {}
+    trivia.points = {}  # Currently we reset all points before starting recurring trivia
+    trivia.questions_asked = 0
     trivia.stoptrivia = False
     self.botSay(e)
     ask_question()
@@ -68,17 +88,17 @@ play_trivia.command = "!trivia"
 
 
 def trivia_q(self, e):
+    #Current method of getting only 1 question
     trivia.bot = self
     trivia.e = e
+    trivia.questions_asked = 0
     ask_question()
     trivia.stoptrivia = True
 trivia_q.command = "!triviaq"
 
+
 def stop_trivia(self, e):
-#    trivia.answer = ""
-#    trivia.question = ""
-#    trivia.hint = ""
-    if trivia.gameon == True:
+    if trivia.gameon:
         trivia.stoptrivia = True
         e.output = "Trivia Stopped after the answer is given"
         return e
@@ -90,44 +110,48 @@ def stop_trivia(self, e):
         return e
 stop_trivia.command = "!strivia"
 
+
 def show_points(self, e):
     e.output = str(trivia.points)
     return e
 show_points.command = "!score"
 
+
 def reset_score(self, e):
     trivia.points = {}
 #reset_score.command = "!resetscore"
 
+
 def clean_answer(answer):
     #gets rid of articles like 'The' Answer, 'An' Answer, 'A' cat, etc.
     #also removes a few cases like Answer (alternate answer) - removes anything in ()
+    #gets rid of the "" mars in "answer"
     answer = answer.lower()
     if answer[0:4] == "the ":
-       answer = answer[4:]
+        answer = answer[4:]
     if answer[0:3] == "an ":
-       answer = answer[3:]
+        answer = answer[3:]
     if answer[0:2] == "a ":
-       answer = answer[2:]
-    
+        answer = answer[2:]
+
     answer = answer.replace('"', "")
     answer = re.sub(r'\(.*?\)', '', answer)
-    
+
     return answer.strip()
 
 
 def make_hint(self, e):
-    if trivia.gameon == False:
-       return
+    if not trivia.gameon:
+        return
     trivia.value = round(trivia.value / 2)
     hint = ""
     i = 0
-    for chr in trivia.hint:
-       if random.randint(0, 3) == 1 or i == 0:
-           hint = hint + trivia.answer[i]
-       else:
-           hint = hint + chr
-       i += 1
+    for char in trivia.hint:
+        if random.randint(0, 3) == 1 or i == 0:
+            hint = hint + trivia.answer[i]
+        else:
+            hint = hint + char
+        i += 1
     trivia.hint = hint
     e.output = "Hint ${}: {}".format(trivia.value, hint)
     return e
@@ -139,34 +163,45 @@ def trivia():
 trivia.gameon = False
 trivia.stoptrivia = False
 trivia.qtime = 30
+trivia.qdelay = 7
 trivia.points = {}
+trivia.questions_asked = 0
+
 
 def answer_grabber(self, e):
-  
-    if trivia.gameon == True:
-        print(e.input)
+
+    if trivia.gameon:
+
         ratio = Levenshtein.ratio(e.input.lower(), trivia.answer)
-#    if ratio > 0.95:
-        print(ratio)
-        if ratio > 0.90:
-            trivia.gameon = False 
+        print((e.input + " " + str(ratio)))  # Show the ratio of the guess for tuning
+
+        if ratio >= 0.90:
+            trivia.gameon = False
             trivia.timer.cancel()
 
             try:
-                x = trivia.points[e.nick]
+                trivia.points[e.nick]
             except:
-                trivia.points[e.nick] = 0
-            trivia.points[e.nick] = trivia.points[e.nick] + trivia.value
-            
-            e.output = "Winrar! {} [ {} pts ] got the answer: {}".format(e.nick, trivia.points[e.nick], trivia.answer)
+                trivia.points[e.nick] = [0, 0]  # Points, Number of questions
+            trivia.points[e.nick][0] = trivia.points[e.nick][0] + trivia.value
+            trivia.points[e.nick][1] += 1
+
+            tmr = "{:.2f}".format(time.time() - trivia.qtimestamp)
+
+            e.output = "Winrar! {} [ ${} in {} ] got the answer: {} in {} seconds".format(
+                                                                                        e.nick,
+                                                                                        trivia.points[e.nick][0],
+                                                                                        trivia.points[e.nick][1],
+                                                                                        trivia.answer,
+                                                                                        tmr
+                                                                                        )
             self.botSay(e)
 
-            if trivia.stoptrivia == True:
+            if trivia.stoptrivia:
                 trivia.gameon = False
-                trivia.stoptrivia = False
-            else: 
-               trivia.qtimer=threading.Timer(10, ask_question)
-               trivia.qtimer.start()
+            else:
+                trivia.qtimer = threading.Timer(trivia.qdelay, ask_question)
+                trivia.qtimer.start()
 
 answer_grabber.lineparser = True
 

@@ -6,6 +6,29 @@ import random
 import re
 
 
+def trivia(self, e):
+    if trivia.gameon:
+        e.output = "Trivia is already running"
+        return e
+    trivia.bot = self
+    trivia.e = e
+
+    e.output = "Trivia started! Use !strivia to stop"
+    trivia.points = {}  # Currently we reset all points before starting recurring trivia
+    trivia.questions_asked = 0
+    trivia.stoptrivia = False
+    self.botSay(e)
+    ask_question()
+
+trivia.command = "!trivia"
+trivia.gameon = False
+trivia.stoptrivia = False
+trivia.qtime = 30
+trivia.qdelay = 7
+trivia.points = {}
+trivia.questions_asked = 0
+
+
 def ask_question():
     conn = sqlite3.connect("clues.db")
     c = conn.cursor()
@@ -34,7 +57,7 @@ def ask_question():
                                                                      trivia.value,
                                                                      clue[1],
                                                                      clue[2],
-                                                                     hint,
+                                                                     hint
                                                                      )
     trivia.e.output = trivia.question
     trivia.gameon = True
@@ -42,6 +65,37 @@ def ask_question():
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(trivia.qtime, failed_answer)
     trivia.timer.start()
+
+
+def clean_answer(answer):
+    #gets rid of articles like 'The' Answer, 'An' Answer, 'A' cat, etc.
+    #also removes a few cases like Answer (alternate answer) - removes anything in ()
+    #gets rid of the "" mars in "answer"
+    answer = answer.lower()
+    if answer[0:4] == "the ":
+        answer = answer[4:]
+    if answer[0:3] == "an ":
+        answer = answer[3:]
+    if answer[0:2] == "a ":
+        answer = answer[2:]
+
+    answer = answer.replace('"', "")
+    answer = re.sub(r'\(.*?\)', '', answer)
+
+    return answer.strip()
+
+
+def trivia_q(self, e):
+    if trivia.gameon:
+        e.output = "Trivia is already running"
+        return e
+    #Current method of getting only 1 question
+    trivia.bot = self
+    trivia.e = e
+    trivia.questions_asked = 0
+    ask_question()
+    trivia.stoptrivia = True
+trivia_q.command = "!triviaq"
 
 
 def question_time(self, e):
@@ -67,34 +121,8 @@ def failed_answer():
     e.output = "FAIL! no one guessed the answer: {}".format(trivia.answer)
     trivia.bot.botSay(e)
     if not trivia.stoptrivia:
-        trivia.qtimer = threading.Timer(trivia.qdelay, ask_question)
-        trivia.qtimer.start()
-
-
-def play_trivia(self, e):
-    if trivia.gameon:
-        e.output = "Trivia is already running"
-        return e
-    trivia.bot = self
-    trivia.e = e
-
-    e.output = "Trivia started! Use !strivia to stop"
-    trivia.points = {}  # Currently we reset all points before starting recurring trivia
-    trivia.questions_asked = 0
-    trivia.stoptrivia = False
-    self.botSay(e)
-    ask_question()
-play_trivia.command = "!trivia"
-
-
-def trivia_q(self, e):
-    #Current method of getting only 1 question
-    trivia.bot = self
-    trivia.e = e
-    trivia.questions_asked = 0
-    ask_question()
-    trivia.stoptrivia = True
-trivia_q.command = "!triviaq"
+        trivia.delaytimer = threading.Timer(trivia.qdelay, ask_question)
+        trivia.delaytimer.start()
 
 
 def stop_trivia(self, e):
@@ -105,7 +133,7 @@ def stop_trivia(self, e):
     else:
         trivia.gameon = False
         trivia.timer.cancel()
-        trivia.qtimer.cancel()
+        trivia.delaytimer.cancel()
         e.output = "Trivia stopped"
         return e
 stop_trivia.command = "!strivia"
@@ -120,24 +148,6 @@ show_points.command = "!score"
 def reset_score(self, e):
     trivia.points = {}
 #reset_score.command = "!resetscore"
-
-
-def clean_answer(answer):
-    #gets rid of articles like 'The' Answer, 'An' Answer, 'A' cat, etc.
-    #also removes a few cases like Answer (alternate answer) - removes anything in ()
-    #gets rid of the "" mars in "answer"
-    answer = answer.lower()
-    if answer[0:4] == "the ":
-        answer = answer[4:]
-    if answer[0:3] == "an ":
-        answer = answer[3:]
-    if answer[0:2] == "a ":
-        answer = answer[2:]
-
-    answer = answer.replace('"', "")
-    answer = re.sub(r'\(.*?\)', '', answer)
-
-    return answer.strip()
 
 
 def make_hint(self, e):
@@ -156,16 +166,6 @@ def make_hint(self, e):
     e.output = "Hint ${}: {}".format(trivia.value, hint)
     return e
 make_hint.command = "!hint"
-
-
-def trivia():
-    pass
-trivia.gameon = False
-trivia.stoptrivia = False
-trivia.qtime = 30
-trivia.qdelay = 7
-trivia.points = {}
-trivia.questions_asked = 0
 
 
 def answer_grabber(self, e):
@@ -200,8 +200,8 @@ def answer_grabber(self, e):
             if trivia.stoptrivia:
                 trivia.gameon = False
             else:
-                trivia.qtimer = threading.Timer(trivia.qdelay, ask_question)
-                trivia.qtimer.start()
+                trivia.delaytimer = threading.Timer(trivia.qdelay, ask_question)
+                trivia.delaytimer.start()
 
 answer_grabber.lineparser = True
 

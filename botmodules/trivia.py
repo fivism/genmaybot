@@ -100,7 +100,13 @@ trivia_q.command = "!triviaq"
 
 def question_time(self, e):
     try:
-        trivia.qtime = int(e.input)
+        if int(e.input) >= 5:
+            if (e.input) <= 120:
+                trivia.qtime = int(e.input)
+            else:
+                trivia.qtime = 120
+        else:
+            trivia.qtime = 5
     except:
         pass
 question_time.command = "!qtime"
@@ -108,7 +114,13 @@ question_time.command = "!qtime"
 
 def question_delay(self, e):
     try:
-        trivia.qdelay = int(e.input)
+        if int(e.input) >= 1:
+            if int(e.input) <= 30:
+                trivia.qdelay = int(e.input)
+            else:
+                trivia.qdelay = 30
+        else:
+            trivia.qtime = 5
     except:
         pass
 question_delay.command = "!qdelay"
@@ -164,13 +176,14 @@ def make_hint(self, e):
         i += 1
     trivia.hint = hint
     e.output = "Hint ${}: {}".format(trivia.value, hint)
+
     return e
 make_hint.command = "!hint"
 
 
 def answer_grabber(self, e):
-
-    if trivia.gameon:
+    # There's no need to continuously compute levenshtein ratio of everything or !hint
+    if trivia.gameon and e.input.lower() != "!hint":
 
         ratio = Levenshtein.ratio(e.input.lower(), trivia.answer)
         print((e.input + " " + str(ratio)))  # Show the ratio of the guess for tuning

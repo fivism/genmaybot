@@ -23,6 +23,7 @@ def trivia(self, e):
 trivia.command = "!trivia"
 trivia.gameon = False
 trivia.stoptrivia = False
+trivia.autohint = True
 trivia.qtime = 30
 trivia.qdelay = 7
 trivia.points = {}
@@ -63,14 +64,17 @@ def ask_question():
     trivia.gameon = True
     trivia.qtimestamp = time.time()
     trivia.bot.botSay(trivia.e)
-    trivia.timer = threading.Timer(trivia.qtime, failed_answer)
+    if trivia.autohint:
+        trivia.timer = threading.Timer(round(trivia.qtime / 2), first_hint)
+    else:
+        trivia.timer = threading.Timer(trivia.qtime, failed_answer)
     trivia.timer.start()
 
 
 def clean_answer(answer):
     #gets rid of articles like 'The' Answer, 'An' Answer, 'A' cat, etc.
     #also removes a few cases like Answer (alternate answer) - removes anything in ()
-    #gets rid of the "" mars in "answer"
+    #gets rid of the "" marks in "answer"
     answer = answer.lower()
     if answer[0:4] == "the ":
         answer = answer[4:]
@@ -101,13 +105,14 @@ trivia_q.command = "!triviaq"
 def question_time(self, e):
     try:
         if int(e.input) >= 5:
-            if (e.input) <= 120:
+            if int(e.input) <= 120:
                 trivia.qtime = int(e.input)
             else:
                 trivia.qtime = 120
         else:
             trivia.qtime = 5
     except:
+        print("failed")
         pass
 question_time.command = "!qtime"
 
@@ -120,10 +125,61 @@ def question_delay(self, e):
             else:
                 trivia.qdelay = 30
         else:
-            trivia.qtime = 5
+            trivia.qtime = 1
     except:
         pass
 question_delay.command = "!qdelay"
+
+
+def first_hint():
+    trivia.value = round(trivia.value / 2)
+    trivia.hint = perc_hint(30, trivia.hint, trivia.answer)
+    trivia.e.output = "Hint1 ${}: {}".format(trivia.value, trivia.hint)
+    trivia.bot.botSay(trivia.e)
+    trivia.timer = threading.Timer(round(trivia.qtime / 6), second_hint)
+    trivia.timer.start()
+
+
+def second_hint():
+    trivia.value = round(trivia.value / 2)
+    trivia.hint = perc_hint(50, trivia.hint, trivia.answer)
+    trivia.e.output = "Hint2 ${}: {}".format(trivia.value, trivia.hint)
+    trivia.bot.botSay(trivia.e)
+    trivia.timer = threading.Timer(round(trivia.qtime / 6), third_hint)
+    trivia.timer.start()
+
+
+def third_hint():
+    trivia.value = round(trivia.value / 2)
+    trivia.hint = perc_hint(75, trivia.hint, trivia.answer)
+    trivia.e.output = "Hint3 ${}: {}".format(trivia.value, trivia.hint)
+    trivia.bot.botSay(trivia.e)
+    trivia.timer = threading.Timer(round(trivia.qtime / 6), failed_answer)
+    trivia.timer.start()
+
+
+def auto_hint(self, e):
+    if e.input == "on":
+        trivia.autohint = True
+    if e.input == "off":
+        trivia.autohint = False
+auto_hint.command = "!autohint"
+
+
+def perc_hint(revealpercent, hint, answer):
+    letters = [0]
+    for i in range(round(len(trivia.answer) * (revealpercent / 100))):
+        letters.append(random.randint(0, len(trivia.answer)))
+    i = 0
+    hint = ""
+    for char in trivia.answer:
+        if i in letters:
+            hint += trivia.answer[i]
+        else:
+            hint += trivia.hint[i]
+        i += 1
+
+    return hint
 
 
 def failed_answer():
@@ -165,6 +221,9 @@ def reset_score(self, e):
 def make_hint(self, e):
     if not trivia.gameon:
         return
+    if trivia.autohint:
+        e.output = "Hint ${}: {}".format(trivia.value, trivia.hint)
+        return e
     trivia.value = round(trivia.value / 2)
     hint = ""
     i = 0

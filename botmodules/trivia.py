@@ -71,6 +71,12 @@ def ask_question():
     trivia.timer.start()
 
 
+def tq(self, e):
+    e.output = trivia.question
+    return e
+tq.command = "!tq"
+
+
 def clean_answer(answer):
     #gets rid of articles like 'The' Answer, 'An' Answer, 'A' cat, etc.
     #also removes a few cases like Answer (alternate answer) - removes anything in ()
@@ -142,7 +148,7 @@ def first_hint():
 
 def second_hint():
     trivia.value = round(trivia.value / 2)
-    trivia.hint = perc_hint(50, trivia.hint, trivia.answer)
+    trivia.hint = perc_hint(45, trivia.hint, trivia.answer)
     trivia.e.output = "Hint2 ${}: {}".format(trivia.value, trivia.hint)
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(round(trivia.qtime / 6), third_hint)
@@ -195,9 +201,14 @@ def failed_answer():
 
 def stop_trivia(self, e):
     if trivia.gameon:
-        trivia.stoptrivia = True
-        e.output = "Trivia Stopped after the answer is given"
-        return e
+        if e.input == "cancel":
+            e.output = "Trivia will continue"
+            trivia.stoptrivia = False
+            return e
+        else:
+            trivia.stoptrivia = True
+            e.output = "Trivia Stopped after the answer is given"
+            return e
     else:
         trivia.gameon = False
         trivia.timer.cancel()

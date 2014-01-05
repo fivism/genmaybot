@@ -6,8 +6,8 @@ import random
 import re
 
 
-def trivia(self, e):
-    if trivia.gameon:
+def play_trivia(self, e):
+    if trivia.gameon or trivia.delaytimer:
         e.output = "Trivia is already running"
         return e
     trivia.bot = self
@@ -20,7 +20,11 @@ def trivia(self, e):
     self.botSay(e)
     ask_question()
 
-trivia.command = "!trivia"
+play_trivia.command = "!trivia"
+
+
+def trivia():
+    pass
 trivia.gameon = False
 trivia.stoptrivia = False
 trivia.autohint = True
@@ -28,6 +32,7 @@ trivia.qtime = 30
 trivia.qdelay = 7
 trivia.points = {}
 trivia.questions_asked = 0
+trivia.delaytimer = None
 
 
 def ask_question():
@@ -96,7 +101,7 @@ def clean_answer(answer):
 
 
 def trivia_q(self, e):
-    if trivia.gameon:
+    if trivia.gameon or trivia.delaytimer:
         e.output = "Trivia is already running"
         return e
     #Current method of getting only 1 question
@@ -213,6 +218,7 @@ def stop_trivia(self, e):
         trivia.gameon = False
         trivia.timer.cancel()
         trivia.delaytimer.cancel()
+        trivia.delaytimer = None
         e.output = "Trivia stopped"
         return e
 stop_trivia.command = "!strivia"
@@ -282,6 +288,7 @@ def answer_grabber(self, e):
 
             if trivia.stoptrivia:
                 trivia.gameon = False
+                trivia.delaytimer = None
             else:
                 trivia.delaytimer = threading.Timer(trivia.qdelay, ask_question)
                 trivia.delaytimer.start()

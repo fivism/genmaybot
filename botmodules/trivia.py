@@ -28,6 +28,7 @@ def trivia():
 trivia.gameon = False
 trivia.stoptrivia = False
 trivia.autohint = True
+trivia.hintsgiven = 0
 trivia.qtime = 30
 trivia.qdelay = 7
 trivia.points = {}
@@ -54,6 +55,10 @@ def ask_question():
         hint = hint + re.sub(r'[a-zA-Z0-9]', "*", char)
     trivia.hint = hint
 
+    #Try to highlight the point of the question - only if it's in the middle of a sentance'
+    question = clue[2].replace(" this ", " this ")
+    question = question.replace(" these ", " these ")
+
     trivia.value = int(str(clue[0]).replace(",", ""))
     if trivia.value == 0:
         trivia.value = 5000
@@ -62,13 +67,14 @@ def ask_question():
                                                                      trivia.questions_asked,
                                                                      trivia.value,
                                                                      clue[1],
-                                                                     clue[2],
+                                                                     question,
                                                                      hint
                                                                      )
     trivia.e.output = trivia.question
     trivia.gameon = True
     trivia.qtimestamp = time.time()
     trivia.bot.botSay(trivia.e)
+    trivia.hintsgiven = 0
     if trivia.autohint:
         trivia.timer = threading.Timer(round(trivia.qtime / 2), first_hint)
     else:
@@ -87,15 +93,14 @@ def clean_answer(answer):
     #also removes a few cases like Answer (alternate answer) - removes anything in ()
     #gets rid of the "" marks in "answer"
     answer = answer.lower()
+    answer = answer.replace('"', "")
+    answer = re.sub(r'\(.*?\)', '', answer)
     if answer[0:4] == "the ":
         answer = answer[4:]
     if answer[0:3] == "an ":
         answer = answer[3:]
     if answer[0:2] == "a ":
         answer = answer[2:]
-
-    answer = answer.replace('"', "")
-    answer = re.sub(r'\(.*?\)', '', answer)
 
     return answer.strip()
 
@@ -142,7 +147,10 @@ def question_delay(self, e):
 question_delay.command = "!qdelay"
 
 
+#The different hint levels are separate functions only because I
+#originally wanted to do different things for each hint
 def first_hint():
+    trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
     trivia.hint = perc_hint(30, trivia.hint, trivia.answer)
     trivia.e.output = "Hint1 ${}: {}".format(trivia.value, trivia.hint)
@@ -152,6 +160,7 @@ def first_hint():
 
 
 def second_hint():
+    trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
     trivia.hint = perc_hint(45, trivia.hint, trivia.answer)
     trivia.e.output = "Hint2 ${}: {}".format(trivia.value, trivia.hint)
@@ -160,7 +169,9 @@ def second_hint():
     trivia.timer.start()
 
 
+#Might make this show all vowels rather than percent based
 def third_hint():
+    trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
     trivia.hint = perc_hint(75, trivia.hint, trivia.answer)
     trivia.e.output = "Hint3 ${}: {}".format(trivia.value, trivia.hint)
@@ -197,6 +208,7 @@ def failed_answer():
     e = trivia.e
     trivia.timer.cancel()
     trivia.gameon = False
+    trivia.delaytimer = None
     e.output = "FAIL! no one guessed the answer: {}".format(trivia.answer)
     trivia.bot.botSay(e)
     if not trivia.stoptrivia:
@@ -239,7 +251,19 @@ def make_hint(self, e):
     if not trivia.gameon:
         return
     if trivia.autohint:
-        e.output = "Hint ${}: {}".format(trivia.value, trivia.hint)
+        #we advance to the next hint AND forefit the time - this can be used to 'throw away' a q
+
+        if trivia.hintsgiven == 0:
+            trivia.timer.cancel()
+            first_hint()
+        elif trivia.hintsgiven == 1:
+            trivia.timer.cancel()
+            second_hint()
+        elif trivia.hintsgiven == 2:
+            trivia.timer.cancel()
+            third_hint()
+        elif trivia.hintsgiven == 3:
+            e.output = "No more hints available. Hint3 ${}: {}".format(trivia.value, trivia.hint)
         return e
     trivia.value = round(trivia.value / 2)
     hint = ""
@@ -265,6 +289,8 @@ def answer_grabber(self, e):
         print((e.input + " " + str(ratio)))  # Show the ratio of the guess for tuning
 
         if ratio >= 0.90:
+            tmr = "{:.2f}".format(time.time() - trivia.qtimestamp)
+
             trivia.gameon = False
             trivia.timer.cancel()
 
@@ -274,8 +300,6 @@ def answer_grabber(self, e):
                 trivia.points[e.nick] = [0, 0]  # Points, Number of questions
             trivia.points[e.nick][0] = trivia.points[e.nick][0] + trivia.value
             trivia.points[e.nick][1] += 1
-
-            tmr = "{:.2f}".format(time.time() - trivia.qtimestamp)
 
             e.output = "Winrar in {} seconds! {} [ ${} in {} ] got the answer: {}".format(
                                                                                         tmr,

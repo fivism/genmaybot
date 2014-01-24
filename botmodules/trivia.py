@@ -40,7 +40,7 @@ def ask_question():
     conn = sqlite3.connect("clues.db")
     c = conn.cursor()
     rows = int(c.execute("SELECT Count(*) FROM clues").fetchone()[0])
-    clueid = str(random.randint(0, rows - 1))
+    clueid = str(random.randint(1, rows))
     clue = c.execute("SELECT value, category, clue, answer \
                       FROM clues \
                       JOIN documents ON clues.id = documents.id \
@@ -128,8 +128,8 @@ def question_time(self, e):
         else:
             trivia.qtime = 5
     except:
-        print("failed")
-        pass
+        e.output = "Time to answer: " + str(trivia.qtime)
+        return e
 question_time.command = "!qtime"
 
 
@@ -143,7 +143,8 @@ def question_delay(self, e):
         else:
             trivia.qtime = 1
     except:
-        pass
+        e.output = "Time between questions: " + str(trivia.qdelay)
+        return e
 question_delay.command = "!qdelay"
 
 

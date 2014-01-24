@@ -297,6 +297,8 @@ def failed_answer():
     trivia.timer.cancel()
     trivia.gameon = False
     trivia.delaytimer = None
+    dateid = "{}-{}".format(time.strftime("%Y-%m-%d"), trivia.session)
+    save_scores(dateid)
     e.output = "FAIL! no one guessed the answer: {}".format(trivia.answer)
     trivia.bot.botSay(e)
     if not trivia.stoptrivia:

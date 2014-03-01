@@ -36,7 +36,7 @@ def play_trivia(self, e):
     c = conn.cursor()
     sessid = int(c.execute("SELECT Count(*) FROM scores WHERE dateid LIKE (?)",
                            [time.strftime("%Y-%m-%d") + "%"]
-                          ).fetchone()[0]
+                           ).fetchone()[0]
                  )
     sessid += 1
 
@@ -63,7 +63,15 @@ trivia.qdelay = 7
 trivia.points = {}
 trivia.questions_asked = 0
 trivia.delaytimer = None
+trivia.timer = None
 trivia.session = 0
+trivia.answer = ""
+trivia.question = ""
+trivia.hint = ""
+trivia.value = 0
+trivia.bot = None
+trivia.e = None
+trivia.qtimestamp = None
 
 
 def ask_question():
@@ -93,13 +101,12 @@ def ask_question():
     if trivia.value == 0:
         trivia.value = 5000
     trivia.questions_asked += 1
-    trivia.question = "Question {}: ${}. [ {} ] {} \nHint: {}".format(
-                                                                     trivia.questions_asked,
-                                                                     trivia.value,
-                                                                     clue[1],
-                                                                     question,
-                                                                     hint
-                                                                     )
+    trivia.question = "Question {}: ${}. [ {} ] {} \nHint: {}".format(trivia.questions_asked,
+                                                                        trivia.value,
+                                                                        clue[1],
+                                                                        question,
+                                                                        hint
+                                                                        )
     trivia.e.output = trivia.question
     trivia.gameon = True
     trivia.qtimestamp = time.time()
@@ -176,9 +183,9 @@ def save_scores(dateid):
     cursor = conn.cursor()
     score = json.dumps(trivia.points)
     cursor.execute("INSERT OR REPLACE INTO scores(dateid, numqs, scores) VALUES (?, ?, ?)", (dateid,
-                                                                                      trivia.questions_asked,
-                                                                                      score)
-                  )
+                                                                                             trivia.questions_asked,
+                                                                                             score)
+                   )
     conn.commit()
     conn.close()
 
@@ -202,7 +209,7 @@ def question_time(self, e):
                 trivia.qtime = 120
         else:
             trivia.qtime = 5
-    except:
+    except ValueError:
         e.output = "Time to answer: {} seconds".format(str(trivia.qtime))
         return e
 question_time.command = "!qtime"
@@ -223,7 +230,7 @@ def question_delay(self, e):
                 trivia.qdelay = 30
         else:
             trivia.qtime = 1
-    except:
+    except ValueError:
         e.output = "Time between questions: {} seconds ".format(str(trivia.qdelay))
         return e
 question_delay.command = "!qdelay"
@@ -240,7 +247,7 @@ Sets the amount of time in seconds between questions. 1 second minimum to 30 sec
 def first_hint():
     trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
-    trivia.hint = perc_hint(30, trivia.hint, trivia.answer)
+    trivia.hint = perc_hint(30)
     trivia.e.output = "Hint1 ${}: {}".format(trivia.value, trivia.hint)
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(round(trivia.qtime / 6), second_hint)
@@ -250,7 +257,7 @@ def first_hint():
 def second_hint():
     trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
-    trivia.hint = perc_hint(45, trivia.hint, trivia.answer)
+    trivia.hint = perc_hint(45)
     trivia.e.output = "Hint2 ${}: {}".format(trivia.value, trivia.hint)
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(round(trivia.qtime / 6), third_hint)
@@ -261,7 +268,7 @@ def second_hint():
 def third_hint():
     trivia.hintsgiven += 1
     trivia.value = round(trivia.value / 2)
-    trivia.hint = perc_hint(75, trivia.hint, trivia.answer)
+    trivia.hint = perc_hint(75)
     trivia.e.output = "Hint3 ${}: {}".format(trivia.value, trivia.hint)
     trivia.bot.botSay(trivia.e)
     trivia.timer = threading.Timer(round(trivia.qtime / 6), failed_answer)
@@ -276,18 +283,16 @@ def auto_hint(self, e):
 auto_hint.command = "!autohint"
 
 
-def perc_hint(revealpercent, hint, answer):
+def perc_hint(revealpercent):
     letters = [0]
     for i in range(round(len(trivia.answer) * (revealpercent / 100))):
         letters.append(random.randint(0, len(trivia.answer)))
-    i = 0
     hint = ""
-    for char in trivia.answer:
+    for i in range(len(trivia.answer)):
         if i in letters:
             hint += trivia.answer[i]
         else:
             hint += trivia.hint[i]
-        i += 1
 
     return hint
 
@@ -354,7 +359,7 @@ def make_hint(self, e):
     i = 0
     for char in trivia.hint:
         if random.randint(0, 3) == 1 or i == 0:
-            hint = hint + trivia.answer[i]
+            hint += trivia.answer[i]
         else:
             hint = hint + char
         i += 1
@@ -387,22 +392,20 @@ def answer_grabber(self, e):
 
             try:
                 trivia.points[e.nick]
-            except:
+            except KeyError:
                 trivia.points[e.nick] = [0, 0]  # Points, Number of questions
 
-            trivia.points[e.nick][0] = trivia.points[e.nick][0] + trivia.value
+            trivia.points[e.nick][0] += trivia.value
             trivia.points[e.nick][1] += 1
 
             dateid = "{}-{}".format(time.strftime("%Y-%m-%d"), trivia.session)
             save_scores(dateid)
 
-            e.output = "Winrar in {} seconds! {} [ ${} in {} ] got the answer: {}".format(
-                                                                                        tmr,
-                                                                                        e.nick,
-                                                                                        trivia.points[e.nick][0],
-                                                                                        trivia.points[e.nick][1],
-                                                                                        trivia.answer
-                                                                                        )
+            e.output = "Winrar in {} seconds! {} [ ${} in {} ] got the answer: {}".format(tmr,
+                                                                                              e.nick,
+                                                                                              trivia.points[e.nick][0],
+                                                                                              trivia.points[e.nick][1],
+                                                                                              trivia.answer)
             self.botSay(e)
 
             if trivia.stoptrivia:

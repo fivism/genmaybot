@@ -88,8 +88,7 @@ def ask_question():
 
     print(clue)
     trivia.answer = clean_answer(clue[3])
-    hint = re.sub(r'[a-zA-Z0-9]', "*", trivia.answer, len(trivia.answer))
-    trivia.hint = hint
+    trivia.hint = re.sub(r'[a-zA-Z0-9]', "*", trivia.answer, len(trivia.answer))
 
     #Try to highlight the point of the question - only if it's in the middle of a sentance'
     question = clue[2].replace(" this ", " this ")
@@ -103,7 +102,7 @@ def ask_question():
                                                                         trivia.value,
                                                                         clue[1],
                                                                         question,
-                                                                        hint
+                                                                        trivia.hint
                                                                         )
     trivia.e.output = trivia.question
     trivia.gameon = True

@@ -88,9 +88,7 @@ def ask_question():
 
     print(clue)
     trivia.answer = clean_answer(clue[3])
-    hint = trivia.answer
-    for i in range(len(hint)):
-        hint = re.sub(r'[a-zA-Z0-9]', "*", hint)
+    hint = re.sub(r'[a-zA-Z0-9]', "*", trivia.answer, len(trivia.answer))
     trivia.hint = hint
 
     #Try to highlight the point of the question - only if it's in the middle of a sentance'

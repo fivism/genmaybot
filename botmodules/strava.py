@@ -169,12 +169,12 @@ def strava_set_athlete(self, e):
             self.irccontext.privmsg(e.nick, "Sorry, that is not a valid Strava user.")
     else:
         # Bark at stupid users.
-        self.irccontext.privmsg(e.nick, "Usage: !strava-set <strava id>")
+        self.irccontext.privmsg(e.nick, "Usage: \002!strava-set <strava id>\002")
 
 
 strava_set_athlete.command = "!strava-set"
 strava_set_athlete.helptext = """
-                        Usage: !strava-set <strava id>
+                        Usage: \002!strava-set <strava id>\002
                         Example: !strava-set 12345
                         Saves your Strava ID to the bot.
                         Once your Strava ID is saved you can use those commands without an argument."""
@@ -192,7 +192,7 @@ def strava_reset_athlete(self, e):
 
 strava_reset_athlete.command = "!strava-reset"
 strava_reset_athlete.helptext = """
-                        Usage: !strava-reset
+                        Usage: \002!strava-reset\002
                         Removes your Strava ID from the bot."""
 
 
@@ -203,7 +203,7 @@ def strava(self, e):
             if strava_is_valid_user(e.input):
                 # Process a last ride request for a specific strava id.
                 rides_response = request_json("https://www.strava.com/api/v3/athletes/%s/activities" % e.input)
-                e.output = strava_extract_latest_ride(rides_response, e)
+                e.output = strava_extract_latest_ride(rides_response, e, e.input)
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
@@ -215,7 +215,7 @@ def strava(self, e):
                 if strava_is_valid_user(athlete_id):
                     # Process a last ride request for a specific strava id.
                     rides_response = request_json("https://www.strava.com/api/v3/athletes/%s/activities" % athlete_id)
-                    e.output = strava_extract_latest_ride(rides_response, e)
+                    e.output = strava_extract_latest_ride(rides_response, e, athlete_id)
                 else:
                     e.output = "Sorry, that is not a valid Strava user."
             except urllib.error.URLError:
@@ -228,7 +228,7 @@ def strava(self, e):
             if strava_is_valid_user(strava_id):
                 # Process the last ride for the current strava id.
                 rides_response = request_json("https://www.strava.com/api/v3/athletes/%s/activities" % strava_id)
-                e.output = strava_extract_latest_ride(rides_response, e)
+                e.output = strava_extract_latest_ride(rides_response, e, strava_id)
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
@@ -240,7 +240,7 @@ def strava(self, e):
 
 strava.command = "!strava"
 strava.helptext = """
-                        Usage: !strava [strava id]"
+                        Usage: \002!strava [strava id]\002"
                         Example: !strava-last, !strava-last 12345
                         Gets the information about the last ride for the Strava user.
                         If you have a Strava ID set with !strava-set you can use this command without an arguement.
@@ -255,9 +255,9 @@ def strava_achievements(self, e):
         if ride_info:
             achievements = strava_get_ride_achievements(e.input)
             if achievements:
-                e.output = "Achievements for %s: %s" % (ride_info['name'], ', '.join(achievements))
+                e.output = "\002Achievements for %s\002: %s" % (ride_info['name'], ', '.join(achievements))
             else:
-                e.output = "There were no achievements on %s, time to harden the fuck up." % (ride_info['name'])
+                e.output = "There were no achievements on \002%s\002, time to harden the fuck up." % (ride_info['name'])
         else:
             e.output = "Sorry, that is an invalid Strava Ride ID."
     elif e.input:
@@ -272,9 +272,9 @@ def strava_achievements(self, e):
                         recent_ride = rides_response['rides'][0]
                         achievements = strava_get_ride_achievements(recent_ride['id'])
                         if achievements:
-                            e.output = "Achievements for %s: %s" % (recent_ride['name'], ', '.join(achievements))
+                            e.output = "\002Achievements for %s\002: %s" % (recent_ride['name'], ', '.join(achievements))
                         else:
-                            e.output = "There were no achievements on %s, time to harden the fuck up." % (recent_ride['name'])
+                            e.output = "There were no achievements on \002%s\002, time to harden the fuck up." % (recent_ride['name'])
                     else:
                         e.output = "%s does not have any recent achievements." % (e.input)
                 else:
@@ -293,9 +293,9 @@ def strava_achievements(self, e):
                     recent_ride = rides_response['rides'][0]
                     achievements = strava_get_ride_achievements(recent_ride['id'])
                     if achievements:
-                        e.output = "Achievements for %s: %s" % (recent_ride['name'], ', '.join(achievements))
+                        e.output = "\002Achievements for %s\002: %s" % (recent_ride['name'], ', '.join(achievements))
                     else:
-                        e.output = "There were no achievements on %s, time to harden the fuck up." % (recent_ride['name'])
+                        e.output = "There were no achievements on \002%s\002, time to harden the fuck up." % (recent_ride['name'])
                 else:
                     e.output = "You do not have any recent achievements."
             else:
@@ -309,41 +309,67 @@ def strava_achievements(self, e):
 
 strava_achievements.command = "!strava-achievements"
 strava_achievements.helptext = """
-                        Usage: !strava-achievements [ride id]
+                        Usage: \002!strava-achievements [ride id]\002
                         Gets the achievements for a Ride ID"""
 
 
-def strava_extract_latest_ride(response, e):
+def strava_extract_latest_ride(response, e, athlete_id=None):
     """ Grab the latest ride from a list of rides and gather some statistics about it """
     if response:
         recent_ride = response[0]
         recent_ride = strava_get_ride_extended_info(recent_ride['id'])
         if recent_ride:
-            return strava_ride_to_string(recent_ride)
+            return strava_ride_to_string(recent_ride, athlete_id)
         else:
             return "Sorry %s, an error has occured attempting to retrieve the most recent ride's details. They said Ruby was webscale..." % (e.nick)
     else:
         return "Sorry %s, no rides have been recorded yet. Remember, if it's not on Strava, it didn't happen." % (e.nick)
 
 
-def strava_ride_to_string(recent_ride):
+def strava_ride_to_string(recent_ride, athlete_id=None): #if the athlete ID is missing we can default to mph
     # Convert a lot of stuff we need to display the message
-    mph = strava_convert_meters_per_second_to_miles_per_hour(recent_ride['average_speed'])
-    miles = strava_convert_meters_to_miles(recent_ride['distance'])
     moving_time = str(datetime.timedelta(seconds=recent_ride['moving_time']))
-    max_mph = strava_convert_meters_per_second_to_miles_per_hour(recent_ride['max_speed'])
-    feet_climbed = strava_convert_meters_to_feet(recent_ride['total_elevation_gain'])
     ride_datetime = time.strptime(recent_ride['start_date_local'], "%Y-%m-%dT%H:%M:%SZ")
     time_start = time.strftime("%B %d, %Y at %I:%M %p", ride_datetime)
-    # Output string
-    return_string = "%s near %s, %s on %s (http://www.strava.com/activities/%s)\n" % (recent_ride['name'], recent_ride['location_city'], recent_ride['location_state'], time_start, recent_ride['id'])
-    return_string += "Ride Stats: %s mi in %s | %s mph average / %s mph max | %s feet climbed" % (miles, moving_time, mph, max_mph, int(feet_climbed))
+    
+    if athlete_id:
+        measurement_pref = strava_get_measurement_pref(athlete_id)
+    else:
+        measurement_pref = None
+    
+    if measurement_pref == "feet" or athlete_id == None or measurement_pref == None:
+
+        mph = strava_convert_meters_per_second_to_miles_per_hour(recent_ride['average_speed'])
+        miles = strava_convert_meters_to_miles(recent_ride['distance'])
+        max_mph = strava_convert_meters_per_second_to_miles_per_hour(recent_ride['max_speed'])
+        feet_climbed = strava_convert_meters_to_feet(recent_ride['total_elevation_gain'])
+        # Output string
+        return_string = "\002%s\002 near %s, %s on %s (http://www.strava.com/activities/%s)\n" % (recent_ride['name'], recent_ride['location_city'], recent_ride['location_state'], time_start, recent_ride['id'])
+        return_string += "\002Ride Stats:\002 %s mi in %s | %s mph average / %s mph max | %s feet climbed" % (miles, moving_time, mph, max_mph, int(feet_climbed))
+        
+    elif measurement_pref == "meters":
+        kmh = round(float(recent_ride['average_speed']) * 3.6,1) #meters per second to km/h
+        km = round(float(recent_ride['distance']/1000),1) #meters to km
+        max_kmh = round(float(recent_ride['max_speed']) * 3.6,1) #m/s to km/h
+        m_climbed = recent_ride['total_elevation_gain']
+    
+        return_string = "\002%s\002 near %s, %s on %s (http://www.strava.com/activities/%s)\n" % (recent_ride['name'], recent_ride['location_city'], recent_ride['location_state'], time_start, recent_ride['id'])
+        return_string += "\002Ride Stats:\002 %s km in %s | %s km/h average / %s km/h max | %s meters climbed" % (km, moving_time, kmh, max_kmh, int(m_climbed))
+        
+
     # Figure out if we need to add average watts to the string.
     # Users who don't have a weight won't have average watts.
     if 'average_watts' in recent_ride:
         return_string += " | %s watts average power" % (int(recent_ride['average_watts']))
     return return_string
 
+def strava_get_measurement_pref(athlete_id):
+    try:
+        athlete_info = request_json("https://www.strava.com/api/v3/athletes/%s" % athlete_id)
+        if athlete_info:
+            return athlete_info['measurement_preference']
+    except:
+        return None
 
 def strava_get_ride_extended_info(ride_id):
     """ Get all the details about a ride. """

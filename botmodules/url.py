@@ -1,6 +1,8 @@
 # coding=utf-8
 
-import re, hashlib, datetime
+import re
+import hashlib
+import datetime
 import sqlite3
 
 
@@ -46,23 +48,23 @@ def url_posted(self, e):
 
         plural = ""
         if delta.days > 0:
-          if delta.days > 1:
-            plural = "s"
-          days = " (posted %s day%s ago)" % (str(delta.days), plural)
+            if delta.days > 1:
+                plural = "s"
+            days = " (posted %s day%s ago)" % (str(delta.days), plural)
         else:
-          hrs = int(round(delta.seconds/3600.0,0))
-          if hrs == 0:
-            mins = round(delta.seconds/60)
-            if mins > 1:
-              plural = "s"
-            days = " (posted %s minute%s ago)" % (str(mins), plural)
-            if mins == 0:
-                repost=""
-                days=""
-          else:
-            if hrs > 1:
-              plural = "s"
-            days = " (posted %s hour%s ago)" % (str(hrs), plural)
+            hrs = int(round(delta.seconds / 3600.0, 0))
+            if hrs == 0:
+                mins = round(delta.seconds / 60)
+                if mins > 1:
+                    plural = "s"
+                days = " (posted %s minute%s ago)" % (str(mins), plural)
+                if mins == 0:
+                    repost = ""
+                    days = ""
+            else:
+                if hrs > 1:
+                    plural = "s"
+                days = " (posted %s hour%s ago)" % (str(hrs), plural)
 
     title = ""
 
@@ -82,6 +84,12 @@ def url_posted(self, e):
             title = yt.output
     except:
         pass
+    try:
+        trope = self.bangcommands["!trope"](self, e, True)
+        if trope:
+            title = trope.output
+    except:
+        pass
     if url.find("imgur.com") != -1 and url.find("/a/") == -1:
         imgurid = url[url.rfind('/') + 1:]
         if "." in imgurid:
@@ -91,7 +99,6 @@ def url_posted(self, e):
     # Ignore strava ride links because Dan said so, fuck modularity, embace tight coupling.
     if url.find("app.strava.com/activities") != -1 or url.find("www.strava.com/activities") != -1:
         return None
-
     if not title:
         title = get_title(self, e, url)
 
@@ -120,7 +127,7 @@ def get_title(self, e, url):
     page = self.tools["load_html_from_URL"](url, length)
     title = ""
 
-    if page and page.find('meta', attrs={'name': "generator", 'content': re.compile("MediaWiki", re.I)}) != None:
+    if page and page.find('meta', attrs={'name': "generator", 'content': re.compile("MediaWiki", re.I)}):
         try:
             wiki = self.bangcommands["!wiki"](self, e, True, True)
             title = wiki.output
@@ -136,7 +143,7 @@ def last_link(self, e):
     #displays last link posted (requires mysql)
     conn = sqlite3.connect("links.sqlite")
     cursor = conn.cursor()
-    if (cursor.execute("SELECT url FROM links ORDER BY rowid DESC LIMIT 1")):
+    if cursor.execute("SELECT url FROM links ORDER BY rowid DESC LIMIT 1"):
         result = cursor.fetchone()
         url = result[0]
 
@@ -145,5 +152,5 @@ def last_link(self, e):
     return e
 
 last_link.command = "!lastlink"
-last_link.helptext = "Usage: !lastlink\nShows the last URL that was posted in the channel"
-
+last_link.helptext = "Usage: \002!lastlink\002" \
+                     "Shows the last URL that was posted in the channel"

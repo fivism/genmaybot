@@ -270,6 +270,16 @@ class TestBot(SingleServerIRCBot):
             return True
 
     def isspam(self, user, nick):
+        
+        #Clean up ever-growing spam dictionary
+        cleanupkeys = []
+        for key in self.spam:
+            if (time.time() - self.spam[key]['last']) > (24*3600): #anything older than 24 hours
+                cleanupkeys.append(key)
+        for key in cleanupkeys:
+            self.spam.pop(key)
+        #end clean up job         
+            
 
         if not (user in self.spam):
             self.spam[user] = {}
@@ -283,6 +293,7 @@ class TestBot(SingleServerIRCBot):
 
         if self.spam[user]['count'] == 1:
             self.spam[user]['first'] = time.time()
+            return False
 
         if self.spam[user]['count'] > 1:
             self.spam[user]['limit'] = (self.spam[user]['count'] - 1) * 15
@@ -300,11 +311,12 @@ class TestBot(SingleServerIRCBot):
     def alerts(self, context):
         try:
             for command in self.botalerts:
-                say = command()
-                if say:
-                    for channel in self.channels:
-                        if channel != '#bopgun' and channel != '#fsw':
-                            context.privmsg(channel, say)
+                if command.alert: #check if alert is actually enabled
+                    say = command()
+                    if say:
+                        for channel in self.channels:
+                            if channel != '#bopgun' and channel != '#fsw':
+                                context.privmsg(channel, say)
         except Exception as inst:
             print("alerts: " + str(inst))
             pass

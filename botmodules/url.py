@@ -14,13 +14,15 @@ def url_parser(self, e):
         if url[0:4].lower() != "http":
             url = "http://" + url
         e.input = url
-        return url_posted(self, e)
+        
+        title = url_posted(self,e)
+        return None #url_posted(self, e)
     else:
         return None
 url_parser.lineparser = True
 
 
-def url_posted(self, e):
+def url_posted(self, e, titlecall=False):
     url = e.input
     #checks if the URL is a dupe (if mysql is enabled)
     #detects if a wikipedia or imdb url is posted and does the appropriate command for it
@@ -90,6 +92,13 @@ def url_posted(self, e):
             title = trope.output
     except:
         pass
+
+    if not titlecall:
+        cursor.execute("""UPDATE OR IGNORE links SET reposted=reposted+1 WHERE hash = ?""", [urlhash])
+
+    cursor.execute("""INSERT OR IGNORE INTO links(url, hash) VALUES (?,?)""", (url, urlhash))
+    conn.commit()
+
     if url.find("imgur.com") != -1 and url.find("/a/") == -1:
         imgurid = url[url.rfind('/') + 1:]
         if "." in imgurid:
@@ -109,9 +118,7 @@ def url_posted(self, e):
         title = re.sub('\s+', ' ', title)
         title = re.sub('(?i)whatsisname', '', title)
 
-        cursor.execute("""UPDATE OR IGNORE links SET reposted=reposted+1 WHERE hash = ?""", [urlhash])
-        cursor.execute("""INSERT OR IGNORE INTO links(url, hash) VALUES (?,?)""", (url, urlhash))
-        conn.commit()
+
 
         e.output = "%s%s%s" % (repost, title, days)
 
@@ -143,14 +150,14 @@ def last_link(self, e):
     #displays last link posted (requires mysql)
     conn = sqlite3.connect("links.sqlite")
     cursor = conn.cursor()
-    if cursor.execute("SELECT url FROM links ORDER BY rowid DESC LIMIT 1"):
+    if (cursor.execute("SELECT url FROM links ORDER BY rowid DESC LIMIT 1")):
         result = cursor.fetchone()
         url = result[0]
-
+        e.input = url
     conn.close()
-    e.output = "[ " + url + " ] " + get_title(self, e, url)
-    return e
+    
+    return url_posted(self, e, True)
 
-last_link.command = "!lastlink"
-last_link.helptext = "Usage: \002!lastlink\002" \
-                     "Shows the last URL that was posted in the channel"
+last_link.command = "!title"
+last_link.helptext = "Usage: !title\nShows the title of the last URL that was posted in the channel"
+

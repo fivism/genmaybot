@@ -22,6 +22,7 @@ from ircbot import SingleServerIRCBot
 import time, imp
 import sys, os, socket, configparser, threading, traceback
 
+
 socket.setdefaulttimeout(5)
 
 
@@ -85,10 +86,11 @@ class TestBot(SingleServerIRCBot):
         
     
     def on_whoishostline(self, c, e):
-         try:
+
+        try:
             
             self.whoisIP_reply_handler(self, self.whoisIP_sourceEvent, e.arguments()[1].split()[-1],"",True)
-         except:
+        except:
             pass #No whois host line reply handler
 
 
@@ -122,11 +124,11 @@ class TestBot(SingleServerIRCBot):
         command = line.split(" ")[0]
         self.admincommand = ""
         try:
-            if e.arguments()[5].find("r") != -1 and line != "":
-                say = self.admincommands[command](line, nick, self, c)
-                say = say.split("\n")
-                for line in say:
-                    c.privmsg(nick, line)
+            #if e.arguments()[5].find("r") != -1 and line != "":
+            say = self.admincommands[command](line, nick, self, c)
+            say = say.split("\n")
+            for line in say:
+                c.privmsg(nick, line)
 
         except Exception as inst:
             traceback.print_exc()

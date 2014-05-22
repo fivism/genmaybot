@@ -5,8 +5,6 @@ except: pass
 
 def get_wolfram(self, e):
     #query 'input' on wolframalpha and get the plaintext result back
-    if get_wolfram.waitfor_callback:
-        return
     
     try:
         location = e.location
@@ -15,11 +13,7 @@ def get_wolfram(self, e):
     
     if location == "" and user:
         location = user.get_location(e.nick)
-        if location=="":
-            get_wolfram.waitfor_callback=True
-            user.get_geoIP_location(self, e, "", "", "", get_wolfram)
-            
-            return
+
             
     location = urllib.parse.quote(location)
             

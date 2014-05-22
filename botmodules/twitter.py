@@ -60,4 +60,4 @@ def breaking_alert():
           print("breakinglert: " + str(inst))
           pass
 breaking_alert.lastcheck = ""
-breaking_alert.alert = True
+breaking_alert.alert = False

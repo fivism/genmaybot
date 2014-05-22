@@ -1,5 +1,6 @@
 import sqlite3, urllib.parse, urllib.request, json
 
+
 def set_location(self, e):
     
     conn = sqlite3.connect('userlocations.sqlite')
@@ -34,8 +35,6 @@ def get_geoIP_location(self, e="", ip="", nick="", whois_reply=False, callback="
     ##import pdb; pdb.set_trace()
     if callback:
         get_geoIP_location.callback = callback
-
-    
 
     if whois_reply and get_geoIP_location.callback:
 

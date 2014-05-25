@@ -61,6 +61,9 @@ def google_sun(self, location, sun, nick):
     request.add_header('Range', "bytes=0-40960")
     response = urllib.request.urlopen(request).read().decode('utf-8')
     
+    f = open("file.txt","w")
+    f.write(response)
+    f.close()
 
     m = re.search('(vk_bk vk_ans\"\> )(.*?)( \<\/div\>\s+)(.*?)(\s*? \<\/div\> )',response)
     

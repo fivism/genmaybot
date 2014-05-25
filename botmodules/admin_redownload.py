@@ -2,7 +2,7 @@ import tempfile, os, zipfile, urllib.request, urllib.parse, urllib.error, shutil
 
 def redownload_modules(x,y,self,z):
 
-  url = 'https://github.com/KpaBap/genmaybot/zipball/master'
+  url = 'https://github.com/KpaBap/genmaybot/archive/cycling.zip'
   tmpdir = tempfile.mkdtemp()
   tmpfile = tmpdir+"/bot.zip"
 

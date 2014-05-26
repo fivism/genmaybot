@@ -122,7 +122,7 @@ def get_weather2(self, e):
         try:
             wind = "Wind: " + str(dom.getElementsByTagName('wind_string')[0].childNodes[0].data)
         except:
-            humidity = ""
+            wind = ""
 
         degree_symbol = chr(176)
         chanmsg = "%s / %s / %s%sF %s%sC / %s / %s" % (city, condition, temp_f,degree_symbol, temp_c, degree_symbol, humidity, wind)

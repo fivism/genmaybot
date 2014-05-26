@@ -7,14 +7,9 @@ from urllib.parse import urlparse
 
 def __init__(self):
 	
-	print("DEBUG: Bikephoto module init")
-
 	conn = sqlite3.connect('bikephoto.sqlite')
 	c = conn.cursor()
-	result = c.execute("CREATE TABLE IF NOT EXISTS bikephoto nick TEXT, bikephoto TEXT, photo TEXT, bike TEXT")
-	
-	print("DEBUG: init result: ")
-	
+	result = c.execute("CREATE TABLE IF NOT EXISTS bikePhoto (nick TEXT, bikephoto TEXT, photo TEXT, bike TEXT)")
 	conn.commit()
 	c.close()
 
@@ -121,6 +116,12 @@ def store_string_for_nick(nick, words, command, event):
 	return
 
 def get_string_for_nick(nick, command, event):
+
+	conn = sqlite3.connect('bikephoto.sqlite')
+	c = conn.cursor()
+	result = c.execute("")
+	conn.commit()
+	c.close()
 
 	# SQL magic up in hurr
 	return

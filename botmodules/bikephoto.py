@@ -20,21 +20,22 @@ def bikephoto(self, event):
 	return event
 
 bikephoto.command = "!bikephoto"
-bikephoto.helptext = "bikephoto help text"
+bikephoto.helptext = "Use \"" + bikephoto.command + " [nick]\" for look up, and \"" + bikephoto.command + " set <value>\" to create a new one"
+
 
 def photo(self, event):
 	command_handler(self, event, "photo")
 	return event
 
 photo.command = "!photo"
-photo.helptext = "photo help text"
+photo.helptext = "Use \"" + photo.command + " [nick]\" for look up, and \"" + photo.command + " set <value>\" to create a new one"
 
 def bike(self, event):
 	command_handler(self, event, "bike")
 	return event
 
 bike.command = "!bike"
-bike.helptext = "bike help text"
+bike.helptext = "Use \"" + bike.command + " [nick]\" for look up, and \"" + bike.command + " set <value>\" to create a new one"
 
 # --- End commands
 
@@ -70,12 +71,12 @@ def command_handler(self, event, command):
 
 		#GET with an arg- 
 		else:
-			event.output = "Looking up  " + command + " for: " + words[nick_offset]
+			#event.output = "Looking up  " + command + " for: " + words[nick_offset]
 			get_string_for_nick(words[nick_offset], command, event)
 
 	#GET on self
 	else:
-		event.output = "Looking up your " + command + ", " + nick
+		#event.output = "Looking up your " + command + ", " + nick
 		get_string_for_nick(nick, command, event)
 
 
@@ -100,7 +101,10 @@ def store_url_for_nick(nick, words, command, event):
 		url_string += word
 		url_string += space
 
-	store_string_for_nick(nick, url_string, command, event)
+	#We have at least 1 valid URL
+	if not url_string == "":
+		store_string_for_nick(nick, url_string, command, event)
+
 	return
 
 def store_string_for_nick(nick, words, command, event):
@@ -117,7 +121,7 @@ def store_string_for_nick(nick, words, command, event):
 	else:
 		string = words
 
-	event.output += "\nStoring " + command + ": " + string + "for " + nick
+	event.output += "\nStoring " + command + " " + string + "for " + nick
 
 	sql_insert_or_update(nick, command, string)
 	
@@ -128,7 +132,7 @@ def get_string_for_nick(nick, command, event):
 	#Didnt find one
 	string = sql_get_value_from_command(nick, command)
 	if string == None:
-		print("didnt find one")
+		event.output += "\n" + command + " not found for " + nick
 
 	#Found one
 	else:

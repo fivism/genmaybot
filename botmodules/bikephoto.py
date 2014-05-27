@@ -70,7 +70,8 @@ def command_handler(self, event, command):
 
 		#GET with an arg- 
 		else:
-			event.output = "Looking up  " + command + "for: " + words[nick_offset]
+			event.output = "Looking up  " + command + " for: " + words[nick_offset]
+			get_string_for_nick(words[nick_offset], command, event)
 
 	#GET on self
 	else:
@@ -99,29 +100,85 @@ def store_url_for_nick(nick, words, command, event):
 		url_string += word
 		url_string += space
 
-	store_string_for_nick(nick, url_string, command, events)
+	store_string_for_nick(nick, url_string, command, event)
 	return
 
 def store_string_for_nick(nick, words, command, event):
 
 	string = ""
 	space = " "
-
-	for word in words:
-		string += word
-		string += space
-		print("DEBUG: adding " + word)
+	
+	#Stringify lists, dont mess with strings
+	if not isinstance(words, str):
+		for word in words:
+			string += word
+			string += space
+			print("DEBUG: adding " + word)
+	else:
+		string = words
 
 	event.output += "\nStoring " + command + ": " + string + "for " + nick
+
+	sql_insert_or_update(nick, command, string)
+	
 	return
 
 def get_string_for_nick(nick, command, event):
 
+	#Didnt find one
+	string = sql_get_value_from_command(nick, command)
+	if string == None:
+		print("didnt find one")
+
+	#Found one
+	else:
+		event.output += "\n" + command + ": " + string
+	
+	return
+
+def sql_insert_or_update(nick, command, string):
+
 	conn = sqlite3.connect('bikephoto.sqlite')
 	c = conn.cursor()
-	result = c.execute("")
-	conn.commit()
-	c.close()
 
-	# SQL magic up in hurr
+	#New user
+	result = c.execute("SELECT nick FROM bikePhoto WHERE nick=?", (nick,)).fetchone() 
+	if result == None:
+		print("DEBUG: New nick, inserting " + command + " value: " + string)
+
+		query = "INSERT INTO bikePhoto (nick,%s) VALUES (?,?)" % command
+		result = c.execute(query, (nick, string,))
+		if not result:
+			print("DEBUG: Failed to insert value")
+
+	#Existing user
+	else:
+		print("DEBUG: Existing nick, inserting " + command + " value: " + string)
+		query = "UPDATE bikePhoto set %s = ? WHERE nick=?" % command
+		result = c.execute(query, (string, nick,))
+		if not result:
+			print("DEBUG: Failed to update value")
+
+	conn.commit()
+
+	print("Current db state: ")
+	for row in c.execute("SELECT * FROM bikePhoto"):
+		print(row)
+
+	c.close()
 	return
+
+def sql_get_value_from_command(nick, command):
+
+	conn = sqlite3.connect('bikephoto.sqlite')
+	c = conn.cursor()
+
+	query = "SELECT %s FROM bikePhoto WHERE nick=?" % command
+	value = c.execute(query, (nick,)).fetchone()
+	c.close()
+	
+	if value == None:
+		return;
+	
+	return value[0]
+

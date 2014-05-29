@@ -91,10 +91,17 @@ def store_url_for_nick(nick, words, command, event):
 		try:
 			urllib.request.urlopen(word, None, 3)
 		except urllib.error.URLError:
+<<<<<<< HEAD
 			event.output += "URL: " + word + " is unreachable\n"
 			continue
 		except:
 			event.output += "URL: " + word + " is invalid.\n"
+=======
+			add_to_irc_output("URL: " + url + " is unreachable. ")
+			continue
+		except:
+			add_to_irc_output("URL: " + url + " is invalid. ")
+>>>>>>> parent of 5289179... Merge branch 'cycling' of https://github.com/KpaBap/genmaybot into cycling
 			continue
 
 		print("DEBUG: adding " + word)

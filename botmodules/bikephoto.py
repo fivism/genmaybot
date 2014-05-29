@@ -91,10 +91,10 @@ def store_url_for_nick(nick, words, command, event):
 		try:
 			urllib.request.urlopen(word, None, 3)
 		except urllib.error.URLError:
-			event.output += "URL: " + word + " is unreachable\n"
+			event.output += "URL: " + word + " is unreachable "
 			continue
 		except:
-			event.output += "URL: " + word + " is invalid.\n"
+			event.output += "URL: " + word + " is invalid. "
 			continue
 
 		print("DEBUG: adding " + word)

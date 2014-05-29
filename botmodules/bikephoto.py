@@ -101,10 +101,17 @@ def store_url_for_nick(nick, urls, command):
 		try:
 			urllib.request.urlopen(url, None, 3)
 		except urllib.error.URLError:
+<<<<<<< HEAD
 			add_to_irc_output("URL: " + url + " is unreachable. ")
 			continue
 		except:
 			add_to_irc_output("URL: " + url + " is invalid. ")
+=======
+			event.output += "URL: " + word + " is unreachable "
+			continue
+		except:
+			event.output += "URL: " + word + " is invalid. "
+>>>>>>> 87ee8cfaa614ecba8168fdf290f6f8cce245e712
 			continue
 
 		url_string += url

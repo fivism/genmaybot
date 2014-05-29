@@ -1,13 +1,9 @@
 import re
 import sqlite3
 import urllib.request
-import urllib.parse
+from urllib.parse import urlparse
 
 #Handles !bike, !bikephoto, and !photo
-
-#TODO - dont split url failure output
-
-g_irc_output = ""
 
 def __init__(self):
 	
@@ -20,103 +16,99 @@ def __init__(self):
 # --- Commands in this module
 
 def bikephoto(self, event):
-	command_handler(event, "bikephoto")
+	command_handler(self, event, "bikephoto")
 	return event
 
 bikephoto.command = "!bikephoto"
-bikephoto.helptext = "Use \"" + bikephoto.command + " [nick]\" for look up, and \"" + bikephoto.command + " set <valid URL>\" to create a new one"
+bikephoto.helptext = "Use \"" + bikephoto.command + " [nick]\" for look up, and \"" + bikephoto.command + " set <value>\" to create a new one"
 
 
 def photo(self, event):
-	command_handler(event, "photo")
+	command_handler(self, event, "photo")
 	return event
 
 photo.command = "!photo"
-photo.helptext = "Use \"" + photo.command + " [nick]\" for look up, and \"" + photo.command + " set <valid URL>\" to create a new one"
+photo.helptext = "Use \"" + photo.command + " [nick]\" for look up, and \"" + photo.command + " set <value>\" to create a new one"
 
 def bike(self, event):
-	command_handler(event, "bike")
+	command_handler(self, event, "bike")
 	return event
 
 bike.command = "!bike"
-bike.helptext = "Use \"" + bike.command + " [nick]\" for look up, and \"" + bike.command + " set <string>\" to create a new one"
+bike.helptext = "Use \"" + bike.command + " [nick]\" for look up, and \"" + bike.command + " set <value>\" to create a new one"
 
 # --- End commands
 
-def command_handler(event, command):
-	
+def command_handler(self, event, command):
+
 	nick_offset = 0
-	arg_offset = 0
-	val_offset = 1
+	command_offset = 0
+	arg_offset = 1
 	nick = event.nick
-	irc_input = event.input
 
-	#split the user input along word (whitespace) boundary into list
-	words = irc_input.split()
+	#split the user input along word boundary into list
+	words = event.input.split()
+	word_len = len(words)
 
-	set_function_dict = {'bikephoto':store_url_for_nick, 'photo':store_url_for_nick, 'bike':store_string_for_nick}
-	get_function_dict = {'bikephoto':get_string_for_nick, 'photo':get_string_for_nick, 'bike':get_string_for_nick}
 
-	if(arg_is_present(words)):
+	#event.input omits the "!command", so we just need to check and make sure we got at least one
+	if(word_len):
+		#Two commands, set and get. get is implicit when set is not present and is not explicitly sent by the user
 
-		# SET
-		# EX: !bikephoto set http://valid.url.here
-		if(is_set_arg(words, arg_offset)):
-			set_function_dict[command](nick, words[val_offset:], command)
+		#SET - Make sure we have another word after the command
+		if(word_len >= 2 and words[command_offset] == "set"):
+			# Handle all photo commands generically as URL storing
+			if(command == "bikephoto" or command == "photo"):
+				# Support multiple urls, get all the args
+				store_url_for_nick(nick, words[arg_offset:], command, event)
+			# Handle anything thats not a URL as generic string storing
+			if(command == "bike"):
+				store_string_for_nick(nick, words[arg_offset:], command, event)
+		
+		#SET with no parameters, print some help text
+		elif(word_len and words[command_offset] == "set"):
+			event.output = "You didnt specify a " + command
 
-		# SET without val
-		# EX: !bikephoto set
-		elif(is_arg_without_val(words, arg_offset)):
-			# This eval should be safe, possible values of command are hard coded above.
-			add_to_irc_output(eval(command).helptext)
-
-		# GET with an arg
-		# EX: !bikephoto lance_armstrong
+		#GET with an arg- 
 		else:
-			get_function_dict[command](words[nick_offset], command)
+			#event.output = "Looking up  " + command + " for: " + words[nick_offset]
+			get_string_for_nick(words[nick_offset], command, event)
 
-	# GET on self, no arg or value after command
-	# EX: !bikephoto
+	#GET on self
 	else:
-		get_function_dict[command](nick, command)
+		#event.output = "Looking up your " + command + ", " + nick
+		get_string_for_nick(nick, command, event)
 
-	flush_and_reset_irc_output(event)
 
 	return event
 
-def arg_is_present(words):
-	return len(words)
+def store_url_for_nick(nick, words, command, event):
 
-def is_set_arg(words, offset):
-	return(len(words) >= 2 and words[offset] == "set")
-
-def is_arg_without_val(words, offset):
-	return(len(words) == 1 and words[offset] == "set")
-
-def store_url_for_nick(nick, urls, command):
 	url_string = ""
 	space = " "
 
-	for url in urls:
+	for word in words:
 		try:
-			urllib.request.urlopen(url, None, 3)
+			urllib.request.urlopen(word, None, 3)
 		except urllib.error.URLError:
-			add_to_irc_output("URL: " + url + " is unreachable. ")
+			event.output += "URL: " + word + " is unreachable\n"
 			continue
 		except:
-			add_to_irc_output("URL: " + url + " is invalid. ")
+			event.output += "URL: " + word + " is invalid.\n"
 			continue
 
-		url_string += url
+		print("DEBUG: adding " + word)
+		url_string += word
 		url_string += space
 
 	#We have at least 1 valid URL
 	if not url_string == "":
-		store_string_for_nick(nick, url_string, command)
+		store_string_for_nick(nick, url_string, command, event)
 
-	return 1
+	return
 
-def store_string_for_nick(nick, words, command):
+def store_string_for_nick(nick, words, command, event):
+
 	string = ""
 	space = " "
 	
@@ -125,28 +117,28 @@ def store_string_for_nick(nick, words, command):
 		for word in words:
 			string += word
 			string += space
-			#print("DEBUG: adding " + word)
+			print("DEBUG: adding " + word)
 	else:
 		string = words
 
-	add_to_irc_output("\nStoring " + command + " " + string + "for " + nick)
+	event.output += "\nStoring " + command + " " + string + "for " + nick
 
 	sql_insert_or_update(nick, command, string)
 	
-	return 1
+	return
 
-def get_string_for_nick(nick, command):
+def get_string_for_nick(nick, command, event):
 
 	#Didnt find one
 	string = sql_get_value_from_command(nick, command)
 	if string == None:
-		add_to_irc_output("\n" + command + " not found for " + nick)
+		event.output += "\n" + command + " not found for " + nick
 
 	#Found one
 	else:
-		add_to_irc_output("\n" + command + ": " + string)
+		event.output += "\n" + command + ": " + string
 	
-	return 1
+	return
 
 def sql_insert_or_update(nick, command, string):
 
@@ -178,7 +170,7 @@ def sql_insert_or_update(nick, command, string):
 		print(row)
 
 	c.close()
-	return 1
+	return
 
 def sql_get_value_from_command(nick, command):
 
@@ -190,48 +182,7 @@ def sql_get_value_from_command(nick, command):
 	c.close()
 	
 	if value == None:
-		return 0;
+		return;
 	
 	return value[0]
 
-def add_to_irc_output(output):
-	global g_irc_output
-	g_irc_output += output
-
-def flush_and_reset_irc_output(event):
-	global g_irc_output
-	
-	event.output = g_irc_output
-	g_irc_output = ""
-
-
-# Offline debugging
-
-class debug_event:
-	output = ""
-	input = ""
-	nick = "debug_nick"
-
-def debug():
-	self = ""
-	event = debug_event()
-	__init__(self)
-
-	print("Command:")
-	command = input()
-	print ("Args:")
-	args = input()
-	event.input = args
-
-	#import pdb; pdb.set_trace()
-	for word in command.split():
-		if word == "!bikephoto":
-			bikephoto(self, event)
-		if word == "!bike":
-			bike(self, event)
-		if word == "!photo":
-			photo(self, event)
-
-	print("All done, output is: " + event.output)
-
-#debug()

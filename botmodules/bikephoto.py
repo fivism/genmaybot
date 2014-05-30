@@ -48,14 +48,16 @@ def command_handler(event, command):
 	nick_offset = 0
 	arg_offset = 0
 	val_offset = 1
+
 	nick = event.nick
 	irc_input = event.input
 
-	#split the user input along word (whitespace) boundary into list
-	words = irc_input.split()
-
 	set_function_dict = {'bikephoto':store_url_for_nick, 'photo':store_url_for_nick, 'bike':store_string_for_nick}
 	get_function_dict = {'bikephoto':get_string_for_nick, 'photo':get_string_for_nick, 'bike':get_string_for_nick}
+
+	#split the user input along word (whitespace) boundary into list
+	#EX: set http://url1 http://url2 http://url3
+	words = irc_input.split()
 
 	if(arg_is_present(words)):
 
@@ -99,7 +101,7 @@ def store_url_for_nick(nick, urls, command):
 
 	for url in urls:
 		try:
-			urllib.request.urlopen(url, None, 3)
+			urllib.request.urlopen(url, None, 1)
 		except urllib.error.URLError:
 			add_to_irc_output("URL: " + url + " is unreachable. ")
 			continue

@@ -55,30 +55,30 @@ def command_handler(event, command):
 	set_function_dict = {'bikephoto':store_url_for_nick, 'photo':store_url_for_nick, 'bike':store_string_for_nick}
 	get_function_dict = {'bikephoto':get_string_for_nick, 'photo':get_string_for_nick, 'bike':get_string_for_nick}
 
-	#split the user input along word (whitespace) boundary into list
-	#EX: set http://url1 http://url2 http://url3
+	#split the user input along word (whitespace) boundary into list 
+	#EX: "set http://url1 http://url2 http://url3"
 	words = irc_input.split()
 
 	if(arg_is_present(words)):
 
-		# SET
-		# EX: !bikephoto set http://valid.url.here
+		# SET <VAL>
+		# "set http://valid.url.here"
 		if(is_set_arg(words, arg_offset)):
 			set_function_dict[command](nick, words[val_offset:], command)
 
-		# SET without val
-		# EX: !bikephoto set
+		# SET
+		# EX: "set"
 		elif(is_arg_without_val(words, arg_offset)):
 			# This eval should be safe, possible values of command are hard coded above.
 			add_to_irc_output(eval(command).helptext)
 
-		# GET with an arg
-		# EX: !bikephoto lance_armstrong
+		# GET <VAL>
+		# EX: "lance_armstrong"
 		else:
 			get_function_dict[command](words[nick_offset], command)
 
-	# GET on self, no arg or value after command
-	# EX: !bikephoto
+	# GET
+	# EX: ""
 	else:
 		get_function_dict[command](nick, command)
 

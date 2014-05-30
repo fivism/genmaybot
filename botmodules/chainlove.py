@@ -7,7 +7,7 @@ def get_chainlove(self, e):
     timeleft = int(re.search("(BCNTRY.setupTimerBar\()(\d+)(,\d+\))", page).group(2))
     qtyleft = re.search("(BCNTRY.total_qty_bar.set_data\()(\d+)(,\d+\))", page).group(2)
     
-    e.output = "{} - {}:{} Left - {} Remaining".format(title, timeleft//60, timeleft%60,  qtyleft)
+    e.output = "{} - {}:{:02} Left - {} Remaining".format(title, timeleft//60, timeleft%60,  qtyleft)
     
     return e
 get_chainlove.command = "!chainlove"

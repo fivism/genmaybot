@@ -99,6 +99,16 @@ get_weather.waitfor_callback=False
 get_weather.command = "!w"
 get_weather.helptext = "Usage: !w <location>\nExample: !w hell, mi\nShows weather info from google.com.\nUse !setlocation <location> to save your location"
 
+def weather_alias(self, e):
+    get_weather(self, e)
+    return e
+weather_alias.command = "!weather"
+
+def weatheru_alias(self, e):
+    get_weather2(self, e)
+    return e
+weatheru_alias.command = "!weatheru"
+
 def get_weather2(self, e):
     #wunderground weather of place specified in 'zip'
     zip = e.input

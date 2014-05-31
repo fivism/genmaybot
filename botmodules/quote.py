@@ -8,7 +8,7 @@ g_irc_output = ""
 
 def __init__(self):
 	
-	conn = sqlite3.connect(quotes.db)
+	conn = sqlite3.connect(quote.db)
 	c = conn.cursor()
 	result = c.execute("CREATE TABLE IF NOT EXISTS Quotes (quote TEXT)")
 	conn.commit()
@@ -16,17 +16,17 @@ def __init__(self):
 
 # --- Commands in this module
 
-def quotes(self, event):
+def quote(self, event):
 	command_handler(event, "quote")
 	return event
 
-quotes.command = "!quote"
-quotes.helptext = "Use \"" + quote.command + "\" for look up, and \"" + quote.command + " add <quote>\" to create a new one"
+quote.command = "!quote"
+quote.helptext = "Use \"" + quote.command + "\" for look up, and \"" + quote.command + " add <quote>\" to create a new one"
 
-quotes.db = "quote.sqlite"
-quotes.addcmd = "add"
-quotes.irc_output = ""
-quotes.last_quote = ""
+quote.db = "quote.sqlite"
+quote.addcmd = "add"
+quote.irc_output = ""
+quote.last_quote = ""
 
 # --- End commands
 
@@ -112,22 +112,24 @@ def get_string(command):
 
 	#Found one
 	else:
-		while(string == quotes.last_quote):
+		while(string == quote.last_quote):
 			print("DEBUG: Same as last quote, fetch another one")
 			string = sql_get_random_value_from_command(command)
 
 		add_to_irc_output("\n" + command + ": " + string)
 	
-	quotes.last_quote = string
+	quote.last_quote = string
 	return 1
 
 def sql_insert_or_update(table, value):
 
-	conn = sqlite3.connect(quotes.db)
+	conn = sqlite3.connect(quote.db)
 	c = conn.cursor()
 
 	#New user
-	result = c.execute("SELECT quote FROM Quotes WHERE quote=?", (value,)).fetchone() 
+	query = "SELECT %s from Quotes WHERE Quote=?" % table
+	result = c.execute(query, (value,)).fetchone() 
+	#result = c.execute("SELECT quote FROM Quotes WHERE quote=?", (value,)).fetchone() 
 	if result == None:
 		# Not a duplicate quote (hahah) insert it
 		print("DEBUG: New quote, inserting: " + value)
@@ -152,7 +154,7 @@ def sql_insert_or_update(table, value):
 
 def sql_get_random_value_from_command(table):
 
-	conn = sqlite3.connect(quotes.db)
+	conn = sqlite3.connect(quote.db)
 	c = conn.cursor()
 
 	query = "SELECT %s FROM Quotes ORDER BY RANDOM() LIMIT 1" % table
@@ -166,9 +168,9 @@ def sql_get_random_value_from_command(table):
 
 def add_to_irc_output(output):
 	
-	quotes.irc_output += output
+	quote.irc_output += output
 
 def flush_and_reset_irc_output(event):
 	
-	event.output = quotes.irc_output
-	quotes.irc_output = ""
+	event.output = quote.irc_output
+	quote.irc_output = ""

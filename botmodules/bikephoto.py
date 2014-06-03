@@ -52,48 +52,46 @@ def command_handler(event, command):
 	nick = event.nick
 	irc_input = event.input
 
-	set_function_dict = {'bikephoto':store_url_for_nick, 'photo':store_url_for_nick, 'bike':store_string_for_nick}
-	get_function_dict = {'bikephoto':get_string_for_nick, 'photo':get_string_for_nick, 'bike':get_string_for_nick}
+	arg_list = ['set']
+	
+	photo_arg_function_dict = {'get':get_string_for_nick, 'set':store_url_for_nick}
+	bike_arg_function_dict = {'get':get_string_for_nick, 'set':store_string_for_nick}
+
+	command_dict = {'bikephoto':photo_arg_function_dict, 'photo':photo_arg_function_dict, 'bike':bike_arg_function_dict}
 
 	#split the user input along word (whitespace) boundary into list 
 	#EX: "set http://url1 http://url2 http://url3"
 	words = irc_input.split()
+	function_dict = command_dict[command]
 
 	if(arg_is_present(words)):
-
-		# SET <VAL>
-		# "set http://valid.url.here"
-		if(is_set_arg(words, arg_offset)):
-			set_function_dict[command](nick, words[val_offset:], command)
-
-		# SET
 		# EX: "set"
-		elif(is_arg_without_val(words, arg_offset)):
+		if(is_arg_without_val(words[arg_offset:], arg_list)):
 			# This eval should be safe, possible values of command are hard coded above.
 			add_to_irc_output(eval(command).helptext)
+			flush_and_reset_irc_output(event)
+			return event
+		
+		try:
+			function_dict[words[arg_offset]](nick, words[val_offset:], command)
+			flush_and_reset_irc_output(event)
+			return event
+		except KeyError:
+			nick = words[nick_offset]
+			pass
 
-		# GET <VAL>
-		# EX: "lance_armstrong"
-		else:
-			get_function_dict[command](words[nick_offset], command)
-
-	# GET
-	# EX: ""
-	else:
-		get_function_dict[command](nick, command)
+	function_dict['get'](nick, command)
 
 	flush_and_reset_irc_output(event)
-
 	return event
 
 def arg_is_present(words):
 	return len(words)
 
-def is_set_arg(words, offset):
-	return(len(words) >= 2 and words[offset] == "set")
-
-def is_arg_without_val(words, offset):
-	return(len(words) == 1 and words[offset] == "set")
+def is_arg_without_val(args, known_args):
+	if(len(args) == 1):
+		return([arg for arg in args if arg in known_args])
+	return
 
 def store_url_for_nick(nick, urls, command):
 	url_string = ""
@@ -192,7 +190,7 @@ def sql_get_value_from_command(nick, command):
 	c.close()
 	
 	if value == None:
-		return 0;
+		return None
 	
 	return value[0]
 

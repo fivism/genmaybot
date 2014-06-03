@@ -321,7 +321,7 @@ def strava_parent(self, e):
     return e
 
 strava_parent.command = "!strava"
-strava_parent.helptext = "Fetch a ride: \"!strava [optional nick]\", Set your ID: \"!strava set <athelete id>\", Reset your ID: \"!strava reset\", List achievements for a ride: \"!strava achievements <ride id>\""
+strava_parent.helptext = "Fetch last ride: \"!strava [optional nick]\", Set your ID: \"!strava set <athelete id>\", Reset your ID: \"!strava reset\", List achievements for a ride: \"!strava achievements <ride id>\""
 
 def strava_help(self, e):
     e.output += strava_parent.helptext

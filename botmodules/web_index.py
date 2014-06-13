@@ -33,6 +33,13 @@ class Root:
     def __init__(self,bot): #make a reference to the main bot object
         self.bot = bot
         self.auth = AuthController(self.bot)
+        
+
+    @cherrypy.expose
+    def strava_callback(self):
+        return """
+        The Bearded Wizard Doesn't Know HTML.
+        """    
 
     restricted = RestrictedArea()
 
@@ -150,7 +157,7 @@ def __init__(bot):
     cherrypy.log.screen=False
     cherrypy.server.socket_host = "0.0.0.0"
 
-    cherrypy.server.socket_port = int(bot.botconfig['webui']['port']+1)
+    cherrypy.server.socket_port = int(bot.botconfig['webui']['port'])
     
     thread = threading.Thread(target=cherrypy.quickstart, args=(Root(bot),))
     thread.start()

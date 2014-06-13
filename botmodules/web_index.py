@@ -33,13 +33,6 @@ class Root:
     def __init__(self,bot): #make a reference to the main bot object
         self.bot = bot
         self.auth = AuthController(self.bot)
-        
-
-    @cherrypy.expose
-    def strava_callback(self):
-        return """
-        The Bearded Wizard Doesn't Know HTML.
-        """    
 
     restricted = RestrictedArea()
 

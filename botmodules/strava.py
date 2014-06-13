@@ -41,7 +41,7 @@ def __init__(self):
 
     cherrypy.server.socket_port = int(self.botconfig['webui']['port'])
     
-    thread = threading.Thread(target=cherrypy.quickstart, args=(Root(self),))
+    thread = threading.Thread(target=cherrypy.quickstart, args=(StravaRoot(self),))
     thread.start()
 
 def request_json(url):
@@ -526,7 +526,7 @@ def strava_convert_meters_to_feet(meters):
     feet = 3.28084 * float(meters)
     return round(feet, 1)
 
-class Root:
+class StravaRoot:
     _cp_config = {
         'tools.sessions.on': False,
         'tools.auth.on': False

@@ -38,6 +38,13 @@ class Root:
     
 
     restricted = RestrictedArea()
+    @cherrypy.expose
+    @require()
+    
+    def strava_callback(self):
+        return """
+        <center><blink>YOU'RE IN THE JUNGLE BABY, YOU'RE GONNA DIE!</center></blink>
+        """
 
     @cherrypy.expose
     @require()

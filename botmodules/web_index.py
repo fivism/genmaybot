@@ -150,7 +150,7 @@ def __init__(bot):
     cherrypy.log.screen=False
     cherrypy.server.socket_host = "0.0.0.0"
 
-    cherrypy.server.socket_port = int(bot.botconfig['webui']['port'])
+    cherrypy.server.socket_port = int(bot.botconfig['webui']['port']+1)
     
     thread = threading.Thread(target=cherrypy.quickstart, args=(Root(bot),))
     thread.start()

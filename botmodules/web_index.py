@@ -35,16 +35,13 @@ class Root:
         self.auth = AuthController(self.bot)
         
 
-    
-
-    restricted = RestrictedArea()
     @cherrypy.expose
-    @require()
-    
     def strava_callback(self):
         return """
-        <center><blink>YOU'RE IN THE JUNGLE BABY, YOU'RE GONNA DIE!</center></blink>
-        """
+        The Bearded Wizard Doesn't Know HTML.
+        """    
+
+    restricted = RestrictedArea()
 
     @cherrypy.expose
     @require()

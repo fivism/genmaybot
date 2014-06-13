@@ -39,7 +39,7 @@ def __init__(self):
     cherrypy.log.screen=False
     cherrypy.server.socket_host = "0.0.0.0"
 
-    cherrypy.server.socket_port = int(self.botconfig['webui']['port'])
+    cherrypy.server.socket_port = int(self.botconfig['webui']['port']+1)
     
     thread = threading.Thread(target=cherrypy.quickstart, args=(StravaRoot(self),))
     thread.start()

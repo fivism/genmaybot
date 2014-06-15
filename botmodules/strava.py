@@ -6,8 +6,7 @@ import datetime
 import time
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-import cherrypy
-import threading
+
 
 #this is only needed if we ever have to change the strava token
 def set_stravatoken(line, nick, self, c):
@@ -29,20 +28,12 @@ def set_stravaclientsecret(line, nick, self, c):
          self.botconfig.write(configfile)
 set_stravaclientsecret.admincommand = "stravaclientsecret"
 
+
 def __init__(self):
     """ On init, read the token to a variable, then do a system check which runs upgrades and creates tables. """
     request_json.token = self.botconfig["APIkeys"]["stravaToken"]
     strava_check_system()  # Check the system for tables and/or upgrades
-    
-    ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
-    cherrypy.config.update({'engine.autoreload_on': False})
-    cherrypy.log.screen=False
-    cherrypy.server.socket_host = "0.0.0.0"
 
-    cherrypy.server.socket_port = int(self.botconfig['webui']['port']+1)
-    
-    thread = threading.Thread(target=cherrypy.quickstart, args=(StravaRoot(self),))
-    thread.start()
 
 def request_json(url):
     headers = {'Authorization': 'access_token ' + request_json.token}
@@ -525,18 +516,3 @@ def strava_convert_meters_to_feet(meters):
     """ Convert meters to feet. """
     feet = 3.28084 * float(meters)
     return round(feet, 1)
-
-class StravaRoot:
-    _cp_config = {
-        'tools.sessions.on': False,
-        'tools.auth.on': False
-    }
-
-    def __init__(self,bot): #make a reference to the main bot object
-        self.bot = bot        
-
-    @cherrypy.expose
-    def strava_callback(self):
-        return """
-        Awww yeah, nuts in the butts!
-        """    

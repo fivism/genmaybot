@@ -10,6 +10,12 @@ def get_dvq(self, e):
     return e
 get_dvq.command = "!dvq"
 
+def get_roznalos(self, e):
+    e.output = "https://i.imgur.com/KAbGott.jpg"
+    return e
+get_roznalos.command ="!roznalos"
+get_roznalos.helptext = "Poor roznalos!"
+
 def get_rat(self, e):
     url = "http://www.reddit.com/r/rats/.json"
     e.output = get_redditpics(url)

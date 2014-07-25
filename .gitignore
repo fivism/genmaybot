@@ -35,7 +35,7 @@ _ReSharper*/
 #ninja-ide
 *.nja
 .idea/
-.vagrant/
+
 .DS_Store
 error_log
 event_log

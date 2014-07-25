@@ -8,25 +8,13 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 
+
 #this is only needed if we ever have to change the strava token
 def set_stravatoken(line, nick, self, c):
      self.botconfig["APIkeys"]["stravaToken"] = line[12:]
      with open('genmaybot.cfg', 'w') as configfile:
          self.botconfig.write(configfile)
 set_stravatoken.admincommand = "stravatoken"
-
-
-def set_stravaclientid(line, nick, self, c):
-     self.botconfig["APIkeys"]["stravaClientId"] = line[12:]
-     with open('genmaybot.cfg', 'w') as configfile:
-         self.botconfig.write(configfile)
-set_stravaclientid.admincommand = "stravaclientid"
-
-def set_stravaclientsecret(line, nick, self, c):
-     self.botconfig["APIkeys"]["stravaClientSecret"] = line[12:]
-     with open('genmaybot.cfg', 'w') as configfile:
-         self.botconfig.write(configfile)
-set_stravaclientsecret.admincommand = "stravaclientsecret"
 
 
 def __init__(self):
@@ -103,8 +91,7 @@ def strava_check_create_tables():
     c = conn.cursor()
     tables = {
         'version': "CREATE TABLE version (version_field TEXT, version_number INTEGER)",
-        'athletes': "CREATE TABLE athletes (user TEXT UNIQUE ON CONFLICT REPLACE, strava_id TEXT)",
-        'tokens': "CREATE TABLE tokens (user TEXT UNIQUE ON CONFLICT REPLACE, token TEXT)"
+        'athletes': "CREATE TABLE athletes (user TEXT UNIQUE ON CONFLICT REPLACE, strava_id TEXT)"
     }
     # Go through each table and check if it exists, if it doesn't, run the SQL statement to create it.
     for (table_name, sql_statement) in tables.items():
@@ -127,47 +114,13 @@ def strava_insert_athlete(nick, athlete_id):
 
 
 def strava_delete_athlete(nick, athlete_id):
-    """ Delete a user's strava id from the athletes table """
+    """ Delete a user's strava id from the athletestable """
     conn = sqlite3.connect('strava.sqlite')
     c = conn.cursor()
     query = "DELETE FROM athletes WHERE user = :user AND strava_id = :strava_id"
     c.execute(query, {'user': nick, 'strava_id': athlete_id})
     conn.commit()
     c.close()
-
-
-def strava_insert_token(nick, token):
-    """ Insert a user's strava token into the token table """
-    conn = sqlite3.connect('strava.sqlite')
-    c = conn.cursor()
-    query = "INSERT INTO tokens VALUES (:user, :token)"
-    c.execute(query, {'user': nick, 'token': token})
-    conn.commit()
-    c.close()
-
-
-def strava_delete_token(nick, token):
-    """ Delete a user's token from the token table """
-    conn = sqlite3.connect('strava.sqlite')
-    c = conn.cursor()
-    query = "DELETE FROM tokens WHERE user = :user AND token = :token"
-    c.execute(query, {'user': nick, 'token': token})
-    conn.commit()
-    c.close()
-
-
-def strava_get_token(nick):
-    """ Get an token by user """
-    conn = sqlite3.connect('strava.sqlite')
-    c = conn.cursor()
-    query = "SELECT token FROM tokens WHERE UPPER(user) = UPPER(?)"
-    result = c.execute(query, [nick]).fetchone()
-    if (result):
-        c.close()
-        return result[0]
-    else:
-        c.close()
-        return False
 
 
 def strava_get_athlete(nick):
@@ -201,7 +154,7 @@ def strava_line_parser(self, e):
                 return e
     else:
         return
-strava_line_parser.lineparser = True
+strava_line_parser.lineparser = False
 
 
 def strava_set_athlete(self, e):
@@ -216,15 +169,15 @@ def strava_set_athlete(self, e):
             self.irccontext.privmsg(e.nick, "Sorry, that is not a valid Strava user.")
     else:
         # Bark at stupid users.
-        self.irccontext.privmsg(e.nick, "Usage: !strava-set <strava id>")
+        self.irccontext.privmsg(e.nick, "Usage: !strava set <strava id>")
 
 
-strava_set_athlete.command = "!strava-set"
-strava_set_athlete.helptext = """
-                        Usage: !strava-set <strava id>
-                        Example: !strava-set 12345
-                        Saves your Strava ID to the bot.
-                        Once your Strava ID is saved you can use those commands without an argument."""
+#strava_set_athlete.command = "!strava-set"
+#strava_set_athlete.helptext = """
+#                        Usage: !strava-set <strava id>
+#                        Example: !strava-set 12345
+#                        Saves your Strava ID to the bot.
+#                        Once your Strava ID is saved you can use those commands without an argument."""
 
 
 def strava_reset_athlete(self, e):
@@ -237,10 +190,10 @@ def strava_reset_athlete(self, e):
         self.irccontext.privmsg(e.nick, "You don't even have a Strava ID set, why would you want to reset it?")
 
 
-strava_reset_athlete.command = "!strava-reset"
-strava_reset_athlete.helptext = """
-                        Usage: !strava-reset
-                        Removes your Strava ID from the bot."""
+#strava_reset_athlete.command = "!strava-reset"
+#strava_reset_athlete.helptext = """
+#                        Usage: !strava-reset
+#                        Removes your Strava ID from the bot."""
 
 
 def strava(self, e):
@@ -281,20 +234,25 @@ def strava(self, e):
         except urllib.error.URLError:
             e.output = "Unable to retrieve rides from Strava ID: %s. They said Ruby was webscale..." % (e.input)
     else:
-        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava-set command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
+        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
 
 
-strava.command = "!strava"
-strava.helptext = """
-                        Usage: !strava [strava id]"
-                        Example: !strava-last, !strava-last 12345
-                        Gets the information about the last ride for the Strava user.
-                        If you have a Strava ID set with !strava-set you can use this command without an arguement.
-                        """
+#strava.command = "!strava"
+#strava.helptext = """
+#                        Usage: !strava [strava id]"
+#                        Example: !strava-last, !strava-last 12345
+#                        Gets the information about the last ride for the Strava user.
+#                        If you have a Strava ID set with !strava-set you can use this command without an arguement.
+#                        """
 
 
 def strava_achievements(self, e):
+#beardedw1zard
+    if not e.input:
+        e.output += strava_achievements.helptext
+        return e
+#end beardedw1zard
     """ Get Achievements for a ride. """
     strava_id = strava_get_athlete(e.nick)
     if e.input.isdigit():
@@ -350,15 +308,77 @@ def strava_achievements(self, e):
         except urllib.error.URLError:
             e.output = "Unable to retrieve rides from Strava ID: %s" % (e.input)
     else:
-        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava-set command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
+        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
 
 
-strava_achievements.command = "!strava-achievements"
-strava_achievements.helptext = """
-                        Usage: !strava-achievements [ride id]
-                        Gets the achievements for a Ride ID"""
+#strava_achievements.command = "!strava-achievements"
+strava_achievements.helptext = """Usage: !strava-achievements [ride id]. Gets the achievements for a Ride ID"""
 
+#==== begin beardedwizard
+def strava_parent(self, e):
+    strava_command_handler(self,e)
+    return e
+
+strava_parent.command = "!strava"
+strava_parent.helptext = "Fetch last ride: \"!strava [optional nick]\", Set your ID: \"!strava set <athelete id>\", Reset your ID: \"!strava reset\", List achievements for a ride: \"!strava achievements <ride id>\""
+
+def strava_help(self, e):
+    e.output += strava_parent.helptext
+    return e
+
+def strava_command_handler(self, e):
+    arg_offset = 0
+    val_offset = 1
+    function = None
+
+    arg_function_dict = {'get':strava, 'set':strava_set_athlete, 'reset':strava_reset_athlete, 'achievements':strava_achievements, 'help':strava_help}
+    arg_list = list(arg_function_dict.keys())
+
+    #EX: "set 123456"
+    words = e.input.split()
+
+    #There is something in input
+    #EX: "achievements 12345"
+    if(arg_is_present(words)):
+        if(is_known_arg(words, arg_list)):
+            #Always clean the arg even if no value is present, patch strava* functions to handle None for e.input
+            #EX: "12345" or None
+            e.input = clean_arg_from_input(e.input)
+
+        try:
+            function = arg_function_dict[words[arg_offset]]
+            print("Calling " + function.__name__ + " with e.input of: " + ''.join('none' if e.input is None else e.input))
+            function(self, e)
+            return e
+        except KeyError:
+            pass
+
+    #There are no args or only unknown args. We fall through from the exception above
+    #EX: "" or "beardedw1zard"
+    function = arg_function_dict['get']
+    print("Calling " + function.__name__ + " with e.input of: " + ''.join('none' if e.input is None else e.input))
+    function(self, e)
+
+    return e
+
+
+def arg_is_present(words):
+    return len(words)
+
+def is_known_arg(args, known_args):
+    results = [arg for arg in args if arg in known_args]
+    if(len(results)):
+        return 1
+    return 0
+ 
+
+def clean_arg_from_input(string):
+    if(len(string.split()) > 1):
+        print("returning: " + ' '.join(string.split()[1:]))
+        return ' '.join(string.split()[1:])
+    return
+#==== end beardedwizard
 
 def strava_extract_latest_ride(response, e, athlete_id=None):
     """ Grab the latest ride from a list of rides and gather some statistics about it """

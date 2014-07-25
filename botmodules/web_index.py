@@ -33,6 +33,9 @@ class Root:
     def __init__(self,bot): #make a reference to the main bot object
         self.bot = bot
         self.auth = AuthController(self.bot)
+        
+
+    
 
     restricted = RestrictedArea()
 

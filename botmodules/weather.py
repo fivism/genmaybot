@@ -37,11 +37,12 @@ def get_weather(self, e):
     
     #End callback handling code
     url = "http://api.worldweatheronline.com/free/v1/weather.ashx?q={}&format=json&num_of_days=1&includeLocation=yes&key={}".format(location, self.botconfig["APIkeys"]["wwoAPIkey"])
-
-    response = urllib.request.urlopen(url).read().decode('utf-8')
-    weather = json.loads(response)
-    weatherdata = weather["data"]
-
+    try:
+        response = urllib.request.urlopen(url).read().decode('utf-8')
+        weather = json.loads(response)
+        weatherdata = weather["data"]
+    except:
+        return get_weather2(self, e)
     if 'error' not in weatherdata:
     
         country = weatherdata['nearest_area'][0]['country'][0]['value']

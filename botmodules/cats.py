@@ -72,3 +72,8 @@ def get_redditpics(url):
     cats = catlist.pop(random.randint(0, len(catlist) - 1)) + " :: " + catlist.pop(random.randint(0, len(catlist) - 1))
     return cats
 
+def get_roznalos(self, e):
+    e.output = "https://i.imgur.com/KAbGott.jpg"
+    return e
+get_roznalos.command ="!roznalos"
+get_roznalos.helptext = "Poor roznalos!"

@@ -21,7 +21,7 @@
 from ircbot import SingleServerIRCBot
 import time, imp
 import sys, os, socket, configparser, threading, traceback
-
+import pdb
 
 socket.setdefaulttimeout(5)
 
@@ -41,6 +41,10 @@ class TestBot(SingleServerIRCBot):
 
         self.load_config()
         print(self.loadmodules())
+
+        self.keepalive_nick = "ChanServ"
+        self.alive = True
+
 
     def load_config(self):
         config = configparser.ConfigParser()
@@ -78,11 +82,41 @@ class TestBot(SingleServerIRCBot):
         self.alerts(c)
         self.irccontext = c
         c.who(c.get_nickname())
+        self.last_keepalive = time.time()
+
+        self.keepalive(c)
         
        
     
     def on_youreoper(self, c, e):
         print ("I'm an IRCop bitches!")
+
+    def on_ison(self,c,e):
+
+        ison_reply = e.arguments()[0][:-1] #strip out extraneous space at the end
+
+        #print ("Got ISON reply: %s" % e.arguments()[0])
+
+        if ison_reply == self.keepalive_nick:
+            self.last_keepalive = time.time()
+            self.alive = True
+
+    def keepalive(self, irc_context):
+        if time.time() - self.last_keepalive > 90:
+            if not self.alive:
+                print ("%s: I think we are dead, reconnecting."  % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+                self.jump_server()
+                return
+            print ("%s: Keepalive reply not received, sending request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+            # Send ISON command on configured nick
+            irc_context.ison(self.keepalive_nick)
+            self.alive = False
+        else:
+            #print ("%s: Waiting to send keepalive request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+            pass
+
+        self.keepaliveTimer = threading.Timer(30, self.keepalive, [irc_context])
+        self.keepaliveTimer.start()
         
     
     def on_whoishostline(self, c, e):
@@ -272,7 +306,7 @@ class TestBot(SingleServerIRCBot):
             return True
 
     def isspam(self, user, nick):
-        #Set the number of allowed lines to whatever is in the .cfg file
+	#Set the number of allowed lines to whatever is in the .cfg file
         allow_lines = int(self.botconfig['irc']['spam_protect_lines'])
 
         #Clean up ever-growing spam dictionary
@@ -282,8 +316,8 @@ class TestBot(SingleServerIRCBot):
                 cleanupkeys.append(key)
         for key in cleanupkeys:
             self.spam.pop(key)
-        #end clean up job
-
+        #end clean up job         
+            
 
         if not (user in self.spam):
             self.spam[user] = {}
@@ -311,7 +345,6 @@ class TestBot(SingleServerIRCBot):
                 self.spam[user]['count'] = 1
                 self.spam[user]['limit'] = 30
                 return False
-
 
     def alerts(self, context):
         try:

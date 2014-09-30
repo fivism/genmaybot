@@ -21,7 +21,7 @@
 from ircbot import SingleServerIRCBot
 import time, imp
 import sys, os, socket, configparser, threading, traceback
-import pdb
+
 
 socket.setdefaulttimeout(5)
 

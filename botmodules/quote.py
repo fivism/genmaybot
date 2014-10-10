@@ -21,10 +21,11 @@ def quote(self, event):
 	return event
 
 quote.command = "!quote"
-quote.helptext = "Use \"" + quote.command + "\" for look up, and \"" + quote.command + " add <quote>\" to create a new one"
+quote.helptext = "Use \"" + quote.command + "\" for look up, and \"" + quote.command + " add <quote>\" to create a new one, and \"" + quote.command + " search <string> to search for one"
 
 quote.db = "quote.sqlite"
 quote.addcmd = "add"
+quote.searchcmd = "search"
 quote.irc_output = ""
 quote.last_quote = ""
 
@@ -41,6 +42,8 @@ def command_handler(event, command):
 
 	set_function_dict = {'quote':store_string}
 	get_function_dict = {'quote':get_string}
+	search_function_dict = {'quote':search_string}
+
 
 	#split the user input along word (whitespace) boundary into list 
 	#EX: "set http://url1 http://url2 http://url3"
@@ -53,6 +56,9 @@ def command_handler(event, command):
 		if(is_add_arg(words, arg_offset)):
 			if not (set_function_dict[command](words[val_offset:], command)):
 				add_to_irc_output("\nFailed to add duplicate quote")
+		
+		elif(is_search_arg(words, arg_offset)):
+			search_function_dict[command](words[val_offset:], command)
 
 		# ADD
 		# EX: "add"
@@ -80,6 +86,9 @@ def arg_is_present(words):
 def is_add_arg(words, offset):
 	return(len(words) >= 2 and words[offset] == quote.addcmd)
 
+def is_search_arg(words, offset):
+	return(len(words) >= 2 and words[offset] == quote.searchcmd)
+
 def is_arg_without_val(words, offset):
 	return(len(words) == 1 and words[offset] == quote.addcmd)
 
@@ -103,6 +112,32 @@ def store_string(words, command):
 	
 	return 1
 
+	
+def search_string(words, command):
+	search_string = ""
+	space = " "
+	
+	#Stringify lists, dont mess with strings
+	if not isinstance(words, str):
+		for word in words:
+			search_string += word
+			search_string += space
+			#print("DEBUG: adding " + word)
+	else:
+		search_string = words
+
+	#Didnt find one
+	string = sql_search_value_from_command(command, search_string)
+	if string == None:
+		add_to_irc_output("\n" + command + " not found")
+
+	#Found one
+	else:
+		add_to_irc_output("\n" + command + ": " + string)
+	
+	quote.last_quote = string
+	return 1
+
 def get_string(command):
 
 	#Didnt find one
@@ -120,6 +155,7 @@ def get_string(command):
 	
 	quote.last_quote = string
 	return 1
+
 
 def sql_insert_or_update(table, value):
 
@@ -158,6 +194,21 @@ def sql_get_random_value_from_command(table):
 	c = conn.cursor()
 
 	query = "SELECT %s FROM Quotes ORDER BY RANDOM() LIMIT 1" % table
+	value = c.execute(query).fetchone()
+	c.close()
+	
+	if value == None:
+		return 0;
+	
+	return value[0]
+
+def sql_search_value_from_command(table, search_string):
+
+	conn = sqlite3.connect(quote.db)
+	c = conn.cursor()
+
+	search_string = '%' + search_string + '%'
+	query = "SELECT %s FROM Quotes WHERE %s LIKE '%s' ORDER BY RANDOM() LIMIT 1" % (table, search_string)
 	value = c.execute(query).fetchone()
 	c.close()
 	

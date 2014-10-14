@@ -208,7 +208,7 @@ def sql_search_value_from_command(table, search_string):
 	c = conn.cursor()
 	search_string = search_string.strip()
 	search_string = '%' + search_string + '%'
-	query = "SELECT ? FROM Quotes WHERE ? LIKE '?' ORDER BY RANDOM() LIMIT 1"
+	query = "SELECT ? FROM Quotes WHERE ? LIKE ? ORDER BY RANDOM() LIMIT 1"
 	value = c.execute(query, (table, table, search_string)).fetchone()
 	c.close()
 	if value == None:

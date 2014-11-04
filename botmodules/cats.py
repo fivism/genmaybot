@@ -67,6 +67,8 @@ def get_redditpics(url):
         if 'jpg' in cat['data']['url'] or 'imgur.com' in cat['data']['url']:
             pic_title = cat['data']['title']
             pic_title = pic_title.replace('\n', '')
+            if cat['data']['over_18']:
+                pic_title = "=NSFW= " + pic_title
             catlist.append(cat['data']['url'] + " - " + pic_title)
 
     cats = catlist.pop(random.randint(0, len(catlist) - 1)) + " :: " + catlist.pop(random.randint(0, len(catlist) - 1))

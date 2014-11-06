@@ -118,6 +118,10 @@ def list_stock(nick,public):
 
 		
 		for stock in result:
+			
+			if stock_prices[id_counter] == 0:
+				continue
+			
 			init_value+=(stock[2]*stock[3])
 			cur_value+=(stock[2]*float(stock_prices[id_counter]))
 			stock_gain=float(stock_prices[id_counter])-stock[3]

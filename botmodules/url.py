@@ -41,8 +41,7 @@ def url_posted(self, e, titlecall=False):
     query = "SELECT reposted, timestamp FROM links WHERE hash='%s'" % urlhash
     result = cursor.execute(query)
     result = cursor.fetchone()
-    if result and not titlecall:
-        
+    if result and result[0] != 0:
         repost = "LOL REPOST %s " % (result[0] + 1)
 
         orig = datetime.datetime.strptime(result[1], "%Y-%m-%d %H:%M:%S")

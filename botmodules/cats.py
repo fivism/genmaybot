@@ -79,3 +79,9 @@ def get_roznalos(self, e):
     return e
 get_roznalos.command ="!roznalos"
 get_roznalos.helptext = "Poor roznalos!"
+
+def faptain(self, e):
+    e.output = "FaptainAwesome to the rescue!"
+    return e
+
+faptain.command = "!fap"

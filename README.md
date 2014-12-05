@@ -6,7 +6,7 @@
 4. vagrant up
 5. Profit, or develop or something?
 
-# Manual Setup (This is stupid)
+# Manual Setup (dvq sucks at linux)
 
 This is the Python 3.x branch - it works, for Brak's pleasure.
 

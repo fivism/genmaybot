@@ -699,7 +699,7 @@ class ServerConnection(Connection):
 
             nicks -- List of nicks.
         """
-        self.send_raw("ISON " + nicks)
+        self.send_raw("ISON " + " ".join(nicks))
 
     def join(self, channel, key=""):
         """Send a JOIN command."""

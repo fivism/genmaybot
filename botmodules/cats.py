@@ -5,13 +5,6 @@ def get_cat(self, e):
     return e
 get_cat.command = "!cats"
 
-
-def get_jeffers(self, e):
-    e.output = "http://i.imgur.com/kalVBHv.jpg"
-    return e
-get_jeffers.command = "!jeffers"
-
-
 def get_dvq(self, e):
     e.output = "http://i.imgur.com/1lq54.jpg"
     return e
@@ -71,14 +64,24 @@ def get_redditpics(url):
     cats = json.loads(response.decode('utf-8'))
     catlist = []
     for cat in cats['data']['children']:
-        if 'jpg' in cat['data']['url'] or 'imgur.com' in cat['data']['url'] or 'gfycat.com' in cat['data']['url']:
+        if 'jpg' in cat['data']['url'] or 'imgur.com' in cat['data']['url']:
             pic_title = cat['data']['title']
             pic_title = pic_title.replace('\n', '')
             if cat['data']['over_18']:
-                pic_title = "\002NSFW\002 " + pic_title 
+                pic_title = "=NSFW= " + pic_title
             catlist.append(cat['data']['url'] + " - " + pic_title)
-
 
     cats = catlist.pop(random.randint(0, len(catlist) - 1)) + " :: " + catlist.pop(random.randint(0, len(catlist) - 1))
     return cats
 
+def get_roznalos(self, e):
+    e.output = "https://i.imgur.com/KAbGott.jpg"
+    return e
+get_roznalos.command ="!roznalos"
+get_roznalos.helptext = "Poor roznalos!"
+
+def faptain(self, e):
+    e.output = "FaptainAwesome to the rescue!"
+    return e
+
+faptain.command = "!fap"

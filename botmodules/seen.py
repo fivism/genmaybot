@@ -23,7 +23,6 @@ def __init__(self):
                   'channel text, '
                   'ts NOT NULL default CURRENT_TIMESTAMP)')
 
-    c.execute("UPDATE seen SET nick=lower(nick)")
     conn.commit()
     c.close()
 
@@ -33,14 +32,14 @@ def seenlineparser(self, e):
     if "#" in e.source:
         conn = sqlite3.connect('seen.sqlite')
         c = conn.cursor()
-        c.execute("INSERT INTO seen(nick, lastline, channel) VALUES (?,?,?)", (e.nick.lower(), e.input, e.source))
+        c.execute("INSERT INTO seen(nick, lastline, channel) VALUES (?,?,?)", (e.nick, e.input, e.source))
 
         result = c.execute("SELECT nick FROM seen").fetchall()
         for nick in result:
             if nick[0].lower() in e.input.lower() and "!whopaged" not in e.input.lower():
-                #print(nick[0]) What is this crap
+                #print(nick[0])
                 c.execute("INSERT INTO mentions (mentioned, mentioner, line, channel) "
-                          "VALUES (?,?,?,?)", (nick[0], e.nick.lower(), e.input, e.source))
+                          "VALUES (?,?,?,?)", (nick[0], e.nick, e.input, e.source))
 
         conn.commit()
         c.close()

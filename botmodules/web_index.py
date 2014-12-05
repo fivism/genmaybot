@@ -35,12 +35,7 @@ class Root:
         self.auth = AuthController(self.bot)
         
 
-
-    @cherrypy.expose
-    def strava_callback(self):
-        return """
-        You've reached the Strava answering machine, leave a message after the beep.
-        """
+    
 
     restricted = RestrictedArea()
 

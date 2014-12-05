@@ -1,13 +1,11 @@
-import urllib.request, urllib.error, urllib.parse, urllib, re, botmodules.tools as tools, time
+import urllib.request, urllib.error, urllib.parse, urllib, re, botmodules.tools as tools
 try: import botmodules.userlocation as user
 except: pass
 
 def google_sunrise(self, e):
     #returns the next sunrise time and time from now of the place specified
     #This callback handling code should be able to be reused in any other function
-    if google_sunrise.waitfor_callback:
-        return
-    
+
 
     try:
         location = e.location
@@ -16,12 +14,8 @@ def google_sunrise(self, e):
         
     if location == "" and user:
         location = user.get_location(e.nick)
-        if location=="":
-            google_sunrise.waitfor_callback=True
-            user.get_geoIP_location(self, e, "", "", "", google_sunrise)
-            
-            return
-        
+
+
     
     
     #End callback handling code
@@ -36,9 +30,7 @@ def google_sunset(self, e):
 
     #returns the next sunset time and time from now of the place specified
     #This callback handling code should be able to be reused in any other function
-    if google_sunset.waitfor_callback:
-        return
-    
+
 
     try:
         location = e.location
@@ -47,11 +39,7 @@ def google_sunset(self, e):
         
     if location == "" and user:
         location = user.get_location(e.nick)
-        if location=="":
-            google_sunset.waitfor_callback=True
-            user.get_geoIP_location(self, e, "", "", "", google_sunset)
-            
-            return
+
         
     
     #End callback handling code
@@ -73,6 +61,9 @@ def google_sun(self, location, sun, nick):
     request.add_header('Range', "bytes=0-40960")
     response = urllib.request.urlopen(request).read().decode('utf-8')
     
+    f = open("file.txt","w")
+    f.write(response)
+    f.close()
 
     m = re.search('(vk_bk vk_ans\"\> )(.*?)( \<\/div\>\s+)(.*?)(\s*? \<\/div\> )',response)
     
@@ -92,4 +83,3 @@ def google_sun(self, location, sun, nick):
       return
 
     return tools.remove_html_tags(result)
-

@@ -22,6 +22,7 @@ from ircbot import SingleServerIRCBot
 import time, imp
 import sys, os, socket, configparser, threading, traceback
 
+
 socket.setdefaulttimeout(5)
 
 
@@ -41,8 +42,9 @@ class TestBot(SingleServerIRCBot):
         self.load_config()
         print(self.loadmodules())
 
-        self.keepalive_nick = "OperServ"
+        self.keepalive_nick = "ChanServ"
         self.alive = True
+
 
     def load_config(self):
         config = configparser.ConfigParser()
@@ -80,47 +82,49 @@ class TestBot(SingleServerIRCBot):
         self.alerts(c)
         self.irccontext = c
         c.who(c.get_nickname())
-
         self.last_keepalive = time.time()
 
-        self.keepalive(c)       
+        self.keepalive(c)
         
+       
+    
     def on_youreoper(self, c, e):
         print ("I'm an IRCop bitches!")
-        
-    
+
     def on_ison(self,c,e):
 
         ison_reply = e.arguments()[0][:-1] #strip out extraneous space at the end
 
         #print ("Got ISON reply: %s" % e.arguments()[0])
-        
+
         if ison_reply == self.keepalive_nick:
             self.last_keepalive = time.time()
             self.alive = True
-    
+
     def keepalive(self, irc_context):
         if time.time() - self.last_keepalive > 90:
             if not self.alive:
                 print ("%s: I think we are dead, reconnecting."  % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
-                self.jump_server()     
+                self.jump_server()
                 return
             print ("%s: Keepalive reply not received, sending request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
-            # Send ISON command on configured nick 
+            # Send ISON command on configured nick
             irc_context.ison(self.keepalive_nick)
             self.alive = False
         else:
             #print ("%s: Waiting to send keepalive request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
             pass
-	
+
         self.keepaliveTimer = threading.Timer(30, self.keepalive, [irc_context])
         self.keepaliveTimer.start()
-
+        
+    
     def on_whoishostline(self, c, e):
-         try:
+
+        try:
             
             self.whoisIP_reply_handler(self, self.whoisIP_sourceEvent, e.arguments()[1].split()[-1],"",True)
-         except:
+        except:
             pass #No whois host line reply handler
 
 
@@ -154,11 +158,11 @@ class TestBot(SingleServerIRCBot):
         command = line.split(" ")[0]
         self.admincommand = ""
         try:
-            if e.arguments()[5].find("r") != -1 and line != "":
-                say = self.admincommands[command](line, nick, self, c)
-                say = say.split("\n")
-                for line in say:
-                    c.privmsg(nick, line)
+            #if e.arguments()[5].find("r") != -1 and line != "":
+            say = self.admincommands[command](line, nick, self, c)
+            say = say.split("\n")
+            for line in say:
+                c.privmsg(nick, line)
 
         except Exception as inst:
             traceback.print_exc()
@@ -174,15 +178,7 @@ class TestBot(SingleServerIRCBot):
         hostmask = ircevent.source()[ircevent.source().find("!")+1:]
         command = line.split(" ")[0].lower()
         args = line[len(command)+1:].strip()
-		
-		notice = False
-		
-        try:
-            notice = hasattr(self.bangcommands[command], 'privateonly')
-        except:
-            pass 
-		
-        if private or notice:
+        if private:
             linesource = from_nick
         else:
             linesource = ircevent.target()
@@ -197,7 +193,9 @@ class TestBot(SingleServerIRCBot):
                 e = self.botEvent(linesource, from_nick, hostmask, args)
                 e.botnick = c.get_nickname() #store the bot's nick in the event in case we need it.
 
-
+                if linesource in self.channels and hasattr(self.bangcommands[command], 'privateonly'):
+                    self.doingcommand = False
+                    return
                 etmp.append(self.bangcommands[command](self, e))
 
             #lineparsers take the whole line and nick for EVERY line
@@ -206,6 +204,8 @@ class TestBot(SingleServerIRCBot):
             for command in self.lineparsers:
                 e = self.botEvent(linesource, from_nick, hostmask, line)
                 e.botnick = c.get_nickname()  # store the bot's nick in the event in case we need it.
+                if linesource in self.channels and hasattr(command, 'privateonly'):
+                    continue
                 etmp.append(command(self, e))
 
             firstpass = True
@@ -228,7 +228,6 @@ class TestBot(SingleServerIRCBot):
         try:
             if botevent.output:
                 for line in botevent.output.split("\n"):
-                    line = self.tools['decode_htmlentities'](line)
                     if botevent.notice:
                         self.irccontext.notice(botevent.source, line)
                     else:
@@ -307,7 +306,7 @@ class TestBot(SingleServerIRCBot):
             return True
 
     def isspam(self, user, nick):
-        #Set the number of allowed lines to whatever is in the .cfg file
+	#Set the number of allowed lines to whatever is in the .cfg file
         allow_lines = int(self.botconfig['irc']['spam_protect_lines'])
 
         #Clean up ever-growing spam dictionary
@@ -317,8 +316,8 @@ class TestBot(SingleServerIRCBot):
                 cleanupkeys.append(key)
         for key in cleanupkeys:
             self.spam.pop(key)
-        #end clean up job
-
+        #end clean up job         
+            
 
         if not (user in self.spam):
             self.spam[user] = {}

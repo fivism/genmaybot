@@ -23,4 +23,4 @@ def taf(self, e):
   e.output = dom.getElementsByTagName('raw_text')[0].childNodes[0].data
   return e
 
-metar.command = '!t'
+taf.command = '!t'

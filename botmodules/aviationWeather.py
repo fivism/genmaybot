@@ -11,4 +11,4 @@ def metar(self, e):
   e.output = dom.getElementsByTagName('raw_text')[0].childNodes[0].data
   return e
   
-metar.command = '!metar'
+metar.command = '!m'

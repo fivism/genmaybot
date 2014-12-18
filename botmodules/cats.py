@@ -10,6 +10,12 @@ def get_dvq(self, e):
     return e
 get_dvq.command = "!dvq"
 
+def get_fern(self, e):
+    e.output = "http://i.imgur.com/TNIt1.jpg"
+    return e
+get_fern.command = "!fern"
+
+
 def get_rat(self, e):
     url = "http://www.reddit.com/r/rats/.json"
     e.output = get_redditpics(url)

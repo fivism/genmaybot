@@ -54,7 +54,7 @@ class GearCalc:
 		if self.metric: 
 			return str(round(mps * self.mps_to_kph, 1)) + ' kph';
 		else:
-			return str(round(mps * sef.mps_to_mph, 1)) + ' mph';
+			return str(round(mps * self.mps_to_mph, 1)) + ' mph';
 
 	def solveFrontTeeth (self):
 		return str(int(round(((self.speed / (self.mps_constant * self.wheel_circumference * self.cadence)) * (self.rear_teeth))))) + ' tooth chainring';

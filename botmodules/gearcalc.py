@@ -3,7 +3,7 @@ import math
 
 def call_gearcalc(self, e):
 	calculator = GearCalc(e.input)
-	e.output = calculator.solve()
+	e.output = e.nick + ', ' + calculator.solve()
 	return e
 call_gearcalc.command = "!gearcalc"
 
@@ -15,6 +15,24 @@ class GearCalc:
 	mps_constant = 0.000016674592
 	mph_to_mps = 0.44704
 	kph_to_mps = 0.27778
+	parameter_meta_data = {
+		'cadence': {
+			'name': 'Cadence',
+			'examples': ['90rpm']
+		},
+		'speed': {
+			'name': 'Speed',
+			'examples': ['20mph', '32kph', '9mps']
+		},
+		'front_teeth': {
+			'name': 'Chainring Size',
+			'examples': ['53x11', '50x?']
+		},
+		'rear_teeth': {
+			'name': 'Cog Size',
+			'examples': ['53x11', '?x11']
+		}
+	}
 
 	def __init__(self, calc_string):
 		self.tokens = self.tokenize(calc_string)
@@ -24,6 +42,21 @@ class GearCalc:
 		self.rear_teeth = self.findRearTeeth()
 		self.wheel_circumference = self.findErto()
 		self.metric = self.findMetric()
+
+	def getParameterMetaData(self, parameter, dataType):
+		return self.parameter_meta_data[parameter][dataType]
+
+	def getListMetaDataFromParameters(self, parameters, dataType):
+		return_list = []
+		for parameter in parameters:
+			value = self.getParameterMetaData(parameter, dataType)
+			if value is not None:
+				if type(value) is list:
+					for item in value:
+						return_list.append(item)
+				else:
+					return_list.append(value)
+		return return_list
 
 	def tokenize (self, calc_string):
 		return re.split('\s', calc_string)
@@ -42,12 +75,15 @@ class GearCalc:
 			elif solution_parameter == 'rear_teeth':
 				return self.solveRearTeeth()
 			else:
-				return "Sorry I can't yet solve for " + solution_parameter
+				return "Sorry I can't yet solve for " + self.getParameterMetaData(solution_parameter, 'name')
 		else:
-			return "I need more information try some of the following: " + ', '.join(str(v) for v in self.findMissingParameters())
+			return "I need more information try some of the following: " + ', '.join(str(v) for v in self.getListMetaDataFromParameters(self.findMissingParameters(), 'name')) + " Eg.) " + ', '.join(str(v) for v in self.getListMetaDataFromParameters(self.findMissingParameters(), 'examples'))
 
 	def solveCadence (self):
-		return str(round(self.speed / (self.mps_constant * self.wheel_circumference * self.solveGearRatio()), 1)) + ' rpm';
+		try:
+			return str(round(self.speed / (self.mps_constant * self.wheel_circumference * self.solveGearRatio()), 1)) + ' rpm'
+		except ZeroDivisionError:
+			return "nice try, trying to divide by zero are you?"
 
 	def solveSpeed (self):
 		mps = (self.mps_constant * self.wheel_circumference * self.solveGearRatio() * self.cadence);
@@ -57,13 +93,23 @@ class GearCalc:
 			return str(round(mps * self.mps_to_mph, 1)) + ' mph';
 
 	def solveFrontTeeth (self):
-		return str(int(round(((self.speed / (self.mps_constant * self.wheel_circumference * self.cadence)) * (self.rear_teeth))))) + ' tooth chainring';
+		try:
+			return str(int(round(((self.speed / (self.mps_constant * self.wheel_circumference * self.cadence)) * (self.rear_teeth))))) + ' tooth chainring'
+		except ZeroDivisionError:
+			return "nice try, trying to divide by zero are you?"
+
 
 	def solveRearTeeth (self):
-		return str(int(round((self.mps_constant * self.wheel_circumference * self.cadence * self.front_teeth) / (self.speed)))) + ' tooth cog';
+		try:
+			return str(int(round((self.mps_constant * self.wheel_circumference * self.cadence * self.front_teeth) / (self.speed)))) + ' tooth cog'
+		except ZeroDivisionError:
+			return "nice try, trying to divide by zero are you?"
 
 	def solveGearRatio (self):
-		return self.front_teeth / self.rear_teeth
+		try:
+			return self.front_teeth / self.rear_teeth
+		except ZeroDivisionError:
+			return "nice try, trying to divide by zero are you?"
 
 	def isSolvable(self):
 		missing_parameters = self.findMissingParameters()

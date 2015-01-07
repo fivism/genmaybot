@@ -40,3 +40,5 @@ _ReSharper*/
 error_log
 event_log
 genmaybot.cfg
+support/beautifulsoup*
+support/python-irclib-0.4.8/build

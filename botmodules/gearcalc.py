@@ -147,13 +147,13 @@ class GearCalc:
 
 	def findSpeed(self ):
 		for token in self.tokens:
-			m = re.match(r"^(\d+)mph$", token)
+			m = re.match(r"^([\d.]+)mph$", token)
 			if m:
 				return float(m.group(1)) * self.mph_to_mps
-			m = re.match(r"^(\d+)kph$", token)
+			m = re.match(r"^([\d.]+)kph$", token)
 			if m:
 				return float(m.group(1)) * self.kph_to_mps
-			m = re.match(r"^(\d+)mps$", token)
+			m = re.match(r"^([\d.]+)mps$", token)
 			if m:
 				return float(m.group(1))
 

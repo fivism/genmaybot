@@ -79,7 +79,8 @@ def getRule(self, e):
                     elif int(e.input) in rules:
                               e.output = rules[int(e.input)]
                     else:
-          #except ValueError:
+                              raise ValueError
+          except ValueError:
                              e.output = "Error invalid rule ID. Please enter 1-95"
           return e
 

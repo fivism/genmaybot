@@ -73,22 +73,16 @@ rules = { 1: "Obey the Rules", 2: "Lead by example", 3: "Guide the uninitiated",
  }
 
 def getRule(self, e):
-     if e.input:
-          if isIntegerValue(e.input) and int(e.input) >= 1 and int(e.input) <= len(rules):
-               e.output = "Rule #"+str(e.input)+": "+rules[int(input)]
-          else:
-               e.output = "Stop making up rules, brah."
-     else:
-          random_rule = random.randint(1, len(rules))
-          e.output = "Rule #"+str(random_rule)+": "+rules[random_rule]
-     return e
-     
-def isIntegerValue(v):
-     try:
-          int(v)
-          return True
-     except ValueError:
-          return False
+          try:
+                    if not e.input:
+                              e.output = rules[random.randint(1,len(rules))]
+                    elif int(e.input) in rules:
+                              e.output = rules[int(e.input)]
+                    else:
+                              raise ValueError
+          except ValueError:
+                             e.output = "Error invalid rule ID. Please enter 1-95"
+          return e
 
 getRule.command = "!rule"
 getRule.helptext = "!rule <RuleID> : Shows the corresponding velominati rule."

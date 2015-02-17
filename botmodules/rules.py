@@ -76,7 +76,7 @@ def getRule(self, e):
           try:
                     if (e.input) in rules:
                               e.output = rules[int(e.input)]
-                    if not e.input:
+                    elif not e.input:
                               e.output = rules[random.randint(1,len(rules))]
                     else:
                               raise ValueError

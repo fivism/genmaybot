@@ -74,12 +74,13 @@ rules = { 1: "Obey the Rules", 2: "Lead by example", 3: "Guide the uninitiated",
 
 def getRule(self, e):
           try:
-                    if e.input in rules:
-                              e.output = rules[int(e.input)]
                     if not e.input:
                               e.output = rules[random.randint(1,len(rules))]
-          except ValueError:
-                    e.output = "Error invalid rule ID. Please enter 1-95"
+                    elif int(e.input) in rules:
+                              e.output = rules[int(e.input)]
+                    else:
+          #except ValueError:
+                             e.output = "Error invalid rule ID. Please enter 1-95"
           return e
 
 getRule.command = "!rule"

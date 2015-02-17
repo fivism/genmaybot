@@ -1,3 +1,5 @@
+import random
+
 rules = { 1: "Obey the Rules", 2: "Lead by example", 3: "Guide the uninitiated",
           4: "It's all about the bike", 5: "Harden the fuck up",
           6: "Free your mind and your legs will follow.",
@@ -75,7 +77,7 @@ def getRule(self, e):
                 if (int(e.input)) in rules:
                         e.output = rules[int(e.input)]
                 else:
-                        e.output = "Error invalid rule ID. Please enter 1-95"
+                        e.output = rules[random.randint(1,len(rules))]
         except ValueError:
                 e.output = "Error invalid rule ID. Please enter 1-95"
         return e

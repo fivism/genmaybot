@@ -1,85 +1,62 @@
-import urllib.request, urllib.error, urllib.parse, urllib, re, botmodules.tools as tools
-try: import botmodules.userlocation as user
-except: pass
+import json
+import urllib.request
+import urllib.parse
+from datetime import datetime, timedelta
+try:
+    import botmodules.userlocation as user
+except ImportError:
+    user = None
 
-def google_sunrise(self, e):
-    #returns the next sunrise time and time from now of the place specified
-    #This callback handling code should be able to be reused in any other function
+
+def set_wunderkey(line, nick, self, c):
+    self.botconfig["APIkeys"]["wunderAPIkey"] = line[10:]
+    with open('genmaybot.cfg', 'w') as configfile:
+        self.botconfig.write(configfile)
+set_wunderkey.admincommand = "wunderkey"
 
 
-    try:
-        location = e.location
-    except:
-        location = e.input
-        
+def get_sun(self, e):
+    apikey = self.botconfig["APIkeys"]["wunderAPIkey"]
+    location = e.input
     if location == "" and user:
         location = user.get_location(e.nick)
-
-
     
-    
-    #End callback handling code
-    e.output = google_sun(self, location, "Sunrise", e.nick)
-    return e
-    
-google_sunrise.waitfor_callback = False
-google_sunrise.command = "!sunrise"
-google_sunrise.helptext = "Usage: !sunrise <location>\nExample: !sunrise las vegas, nv\nShows the time of sunrise at a given location\nUse !setlocation <location> to save your location\nThen, using !sunrise without arguments will always show sunrise at your location"
-    
-def google_sunset(self, e):
-
-    #returns the next sunset time and time from now of the place specified
-    #This callback handling code should be able to be reused in any other function
-
-
-    try:
-        location = e.location
-    except:
-        location = e.input
-        
-    if location == "" and user:
-        location = user.get_location(e.nick)
-
-        
-    
-    #End callback handling code
-    
-    e.output = google_sun(self, location, "Sunset", e.nick)
-    return e
-    
-google_sunset.waitfor_callback = False
-google_sunset.command = "!sunset"
-google_sunset.helptext = "Usage: !sunset <location>\nExample: !sunset las vegas, nv\nShows the time of sunset at a given location\nUse !setlocation <location> to save your location\nThen, using !sunset without arguments will always show sunset at your location"
-
-def google_sun(self, location, sun, nick):
-    if location == "" and user:
-       location = user.get_location(nick)
     location = urllib.parse.quote(location)
-    url = "https://www.google.com/search?hl=en&client=opera&hs=6At&rls=en&q=%s+%s&aq=f&aqi=g1&aql=&oq=&gs_rfai=" % (sun, location)
-    request = urllib.request.Request(url, None, {})
-    request.add_header('User-Agent', "Opera/9.80 (Windows NT 6.0; U; en) Presto/2.2.15 Version/10.10")
-    request.add_header('Range', "bytes=0-40960")
-    response = urllib.request.urlopen(request).read().decode('utf-8')
-    
-    f = open("file.txt","w")
-    f.write(response)
-    f.close()
+    url = "http://api.wunderground.com/api/{}/astronomy/q/{}.json"
+    url = url.format(apikey, location)
 
-    m = re.search('(vk_bk vk_ans\"\> )(.*?)( \<\/div\>\s+)(.*?)(\s*? \<\/div\> )',response)
-    
-    try:
-      settime = m.group(2)
-      setlocation = m.group(4)
+    response = urllib.request.urlopen(url).read().decode("utf-8", "replace")
+    data = json.loads(response)['moon_phase']
+    time = "{}:{}".format(data['current_time']['hour'], data['current_time']['minute'])
 
-      #add math to calculate how long ago or how long until
-      #miltime = time.strftime("%H:%M",time.strptime(settime,"%I:%M %p"))
+    sunrise = "{}:{}".format(data['sunrise']['hour'], data['sunrise']['minute'])
+    sunset = "{}:{}".format(data['sunset']['hour'], data['sunset']['minute'])
 
+    now = datetime.strptime(time, "%H:%M")
+    sunriseobj = datetime.strptime(sunrise, "%H:%M")
+    sunsetobj = datetime.strptime(sunset, "%H:%M")
 
-      result = "%s: %s" % (setlocation, settime)
-   
-      #print result
-    except:
-      pass
-      return
+    sunlength = sunsetobj - sunriseobj
+    if sunriseobj > now:
+       ago = "from now"
+       td = sunriseobj - now
+    else:
+       td = now - sunriseobj
+       ago = "ago"
+    til = self.tools['prettytimedelta'](td)
+    #til = td
+    sunrise = "{} ({} {})".format(sunrise, til, ago)
+    if sunsetobj > now:
+       ago = "from now"
+       td = sunsetobj - now
+    else:
+       ago = "ago"
+       td = now - sunsetobj
+    #til = td
+    til = self.tools['prettytimedelta'](td)
+    sunset = "{} ({} {})".format(sunset, til, ago)
 
-    return tools.remove_html_tags(result)
+    out = "Sunrise: {} / Sunset: {} / Day Length: {}".format(sunrise, sunset, sunlength)
+    e.output = out
+    return e
+get_sun.command = "!sun"

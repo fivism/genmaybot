@@ -59,7 +59,7 @@ class GearCalc:
 		return return_list
 
 	def tokenize (self, calc_string):
-		return re.split('[\s\b]', calc_string)
+		return re.split(r'\W+', calc_string)
 
 	def solve (self):
 		if self.isAlreadySolved():

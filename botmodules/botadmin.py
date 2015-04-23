@@ -17,6 +17,8 @@ def manual_spamban(line, nick, self, c):
         self.spam[user]['first'] = time.time()
         self.spam[user]['limit'] = bantime
         return "User %s banned for %s seconds."  % (user, bantime)
+    else:
+        return ("Correct syntax is: spamban user@host 9000")
 manual_spamban.admincommand = "spamban"
 
 def kill_bot(line, nick, self, c):

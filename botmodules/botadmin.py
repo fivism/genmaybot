@@ -3,14 +3,20 @@ import threading
 
 #test commit
 def manual_spamban(line, nick, self, c):
+    try:
+        allow_lines = int(self.botconfig['irc']['spam_protect_lines'])
+    except:
+        print ("Spamban command broken: spam_protect_lines not set in config")
+
     if len(line.split(" ")) == 3:
         user = line.split(" ")[1]
         bantime = line.split(" ")[2]
         self.spam[user] = {}
-        self.spam[user]['count'] = 2
+        self.spam[user]['count'] = allow_lines
         self.spam[user]['last'] = time.time()
         self.spam[user]['first'] = time.time()
         self.spam[user]['limit'] = bantime
+        return "User %s banned for %s seconds."  % (user, bantime)
 manual_spamban.admincommand = "spamban"
 
 def kill_bot(line, nick, self, c):

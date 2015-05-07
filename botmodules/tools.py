@@ -21,6 +21,12 @@ def set_googlecx(line, nick, self, c):
         self.botconfig.write(configfile)
 set_googlecx.admincommand = "gsearchcx"
 
+def set_shorturlkey(line, nick, self, c):
+    google_url.self.botconfig["APIkeys"]["shorturlkey"] = line[12:]
+    with open('genmaybot.cfg', 'w') as configfile:
+        self.botconfig.write(configfile)
+set_shorturlkey.admincommand = "shorturlkey"
+
 def decode_htmlentities(string):
     #decodes things like &amp
     entity_re = re.compile("&(#?)(x?)(\w+);")
@@ -59,9 +65,12 @@ def google_url(searchterm, regexstring):
     cx = google_url.self.botconfig["APIkeys"]["gsearchcx"]
     url = 'https://www.googleapis.com/customsearch/v1?key={}&cx={}&q={}'
     url = url.format(key, cx, searchterm)
-
-    request = urllib.request.Request(url, None, {'Referer': 'http://irc.00id.net'})
-    response = urllib.request.urlopen(request)
+    
+    try:
+        request = urllib.request.Request(url, None, {'Referer': 'http://irc.00id.net'})
+        response = urllib.request.urlopen(request)
+    except urllib.error.HTTPError as err:
+        print(err.read())
 
     results_json = json.loads(response.read().decode('utf-8'))
     results = results_json['items']
@@ -101,9 +110,10 @@ def load_html_from_URL(url, readlength="", returnurl=False):
 def shorten_url(url):
     #goo.gl url shortening service, not used directly but used by some commands
   try:
+    key = google_url.self.botconfig["APIkeys"]["shorturlkey"]
     values = json.dumps({'longUrl': url})
     headers = {'Content-Type': 'application/json'}
-    requestUrl = "https://www.googleapis.com/urlshortener/v1/url"
+    requestUrl = "https://www.googleapis.com/urlshortener/v1/url?key={}".format(key)
     req = urllib.request.Request(requestUrl, values.encode(), headers)
     response = urllib.request.urlopen(req)
     results = json.loads(response.read().decode('utf-8'))

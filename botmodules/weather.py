@@ -86,10 +86,6 @@ def bearing_to_compass(bearing):
 
 def get_weather(self, e):
 
-    #This callback handling code should be able to be reused in any other function
-    if get_weather.waitfor_callback:
-        return
-
     try:
         location = e.location
     except:
@@ -97,12 +93,7 @@ def get_weather(self, e):
         
     if location == "" and user:
         location = user.get_location(e.nick)
-        if location == "":
-            get_weather.waitfor_callback = True
-            user.get_geoIP_location(self, e, "", "", "", get_weather)
-            
-            return
-    
+
     # Try weather functions in order
     forecast_io(self,  e, location)
     

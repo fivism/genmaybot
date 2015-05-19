@@ -138,6 +138,7 @@ def forecast_io(self,e, location=""):
 
     #try:
     results_json = json.loads(response.read().decode('utf-8'))
+    timezone_offset = results_json['offset']    
     current_conditions = results_json['currently']
 
     temp = current_conditions['temperature']
@@ -145,7 +146,7 @@ def forecast_io(self,e, location=""):
     precip_probability = current_conditions['precipProbability']
     current_summary = current_conditions['summary']
     
-    wind_speed = current_conditions['windSpeed']
+    wind_speed = round(current_conditions['windSpeed'], 1)
     wind_speed_kmh = round(wind_speed * 1.609, 1)
 
     wind_direction = current_conditions['windBearing']
@@ -155,7 +156,13 @@ def forecast_io(self,e, location=""):
     
     feels_like = current_conditions['apparentTemperature']
 
+    min_temp = int(round(results_json['daily']['data'][0]['temperatureMin'],0))
+    min_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMinTime'] + (timezone_offset * 3600))).lstrip("0")
+    min_temp_c = int(round((min_temp - 32)*5/9,0)) 
         
+    max_temp = int(round(results_json['daily']['data'][0]['temperatureMax'],0))
+    max_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMaxTime'] + (timezone_offset * 3600))).lstrip("0")
+    max_temp_c = int(round((max_temp - 32)*5/9,0))
         
     if feels_like != temp:
         feels_like = " / Feels like: %s°F %s°C" % (int(round(feels_like,0)), int(round((feels_like- 32)*5/9,0)))
@@ -167,10 +174,11 @@ def forecast_io(self,e, location=""):
 
     # If the minute by minute outlook isn't available, grab the hourly
     try:
-        outlook = results_json['minutely']['summary']
+        outlook = "%s %s " % (results_json['minutely']['summary'], results_json['daily']['summary'])
     except:
-        outlook = results_json['hourly']['summary']
-            
+        outlook = "%s %s" % (results_json['hourly']['summary'], results_json['daily']['summary'])
+        
+
         
         #print(temp,humidity,precip_probability,current_summary,wind_speed,wind_direction,cloud_cover,feels_like)
 
@@ -179,9 +187,10 @@ def forecast_io(self,e, location=""):
     #except:
     #    return
     
-    output = "{} / {} / {}°F {}°C{} / Humidity: {}% / Wind: {} at {} mph ({} km/h) / Cloud Cover: {}% / Outlook: {}"
-    e.output = output.format(address, current_summary, temp, temp_c, feels_like, humidity, wind_direction, wind_speed, wind_speed_kmh, cloud_cover, outlook)
+    output = "{} / {} / {}°F {}°C{} / Humidity: {}% / Wind: {} at {} mph ({} km/h) / Cloud Cover: {}% / High: {}°F {}°C at {} Low: {}°F {}°C at {} / Outlook: {}"
+    e.output = output.format(address, current_summary, temp, temp_c, feels_like, humidity, wind_direction, wind_speed, wind_speed_kmh, cloud_cover, max_temp, max_temp_c, max_temp_time, min_temp, min_temp_c, min_temp_time, outlook)
     return e
+
 
 forecast_io.command = "!fio"
 

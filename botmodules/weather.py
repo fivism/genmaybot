@@ -1,5 +1,5 @@
 import urllib.request, urllib.parse, urllib, xml.dom.minidom
-import json, time
+import json, time, re
 try:
     import botmodules.userlocation as user
 except ImportError:

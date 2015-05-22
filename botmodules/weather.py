@@ -40,14 +40,41 @@ def google_geocode(self, address):
         if status != "OK":
             raise
 
-        formatted_address = results_json['results'][0]['formatted_address']
+        city, state, country, poi = "","","", ""
+        
+        for component in results_json['results'][0]['address_components']:
+            if 'locality' in component['types']:
+                city = component['long_name']
+            elif 'point_of_interest' in component['types']:
+                poi = component['long_name']
+            elif 'natural_feature' in component['types']:
+                poi = component['long_name']
+            elif 'administrative_area_level_1' in component['types']:
+                state = component['short_name']
+            elif 'country' in component['types']:
+                if component['short_name'] != "US":                
+                    country = component['long_name']
+                else:
+                    country = False
 
-        # Take only the city and state if in the USA
-        if formatted_address.find("USA") != -1:
-            formatted_address = formatted_address.split(",")[0]+", "+formatted_address.split(",")[1].split(" ")[1]
+        if not city: city = poi #if we didn't find a city, maybe there was a POI or natural feature entry, so use that instead
 
+        if not country: #Only show the state if in the US
+            country == ""
+        elif country != "Canada" and city:               #We don't care about provinces outside of the US and Canada, unless the city name is empty
+            state = ""
+
+        if city:
+            formatted_address = "{}{}{}".format(city,"" if not state else ", " + state,"" if not country else ", " + country)
+        elif state:
+            formatted_address = "{}{}".format(state,"" if not country else ", " + country)
+        else:
+            formatted_address = "{}".format("" if not country else country)
+        
+        
         lng = results_json['results'][0]['geometry']['location']['lng']
         lat = results_json['results'][0]['geometry']['location']['lat']
+
 
         
     except:
@@ -55,7 +82,7 @@ def google_geocode(self, address):
         print("Geocode URL: %s" % url)
         return
     
-    return formatted_address, lat, lng
+    return formatted_address, lat, lng, country
 
 def bearing_to_compass(bearing):
     dirs = {}        
@@ -90,7 +117,9 @@ def get_weather(self, e):
         location = e.location
     except:
         location = e.input
-        
+    
+    if location and user.get_location(location): location = user.get_location(location) #allow looking up by nickname
+    
     if location == "" and user:
         location = user.get_location(e.nick)
 
@@ -118,15 +147,9 @@ def forecast_io(self,e, location=""):
         location = e.input
     if location == "" and user:
         location = user.get_location(e.nick)
+  
+    address, lat, lng, country = google_geocode(self,location)
 
-        
-    #try:
-    address, lat, lng = google_geocode(self, location)
-    print (address, lat, lng)
-    #except: #Google geocode failed
-    #    return False
-
-    
     url = "https://api.forecast.io/forecast/{}/{},{}"
     url = url.format(apikey, lat, lng)
 
@@ -146,8 +169,8 @@ def forecast_io(self,e, location=""):
     precip_probability = current_conditions['precipProbability']
     current_summary = current_conditions['summary']
     
-    wind_speed = round(current_conditions['windSpeed'], 1)
-    wind_speed_kmh = round(wind_speed * 1.609, 1)
+    wind_speed = int(round(current_conditions['windSpeed'], 0))
+    wind_speed_kmh = int(round(wind_speed * 1.609, 0))
 
     wind_direction = current_conditions['windBearing']
     wind_direction = bearing_to_compass(wind_direction)
@@ -157,18 +180,22 @@ def forecast_io(self,e, location=""):
     feels_like = current_conditions['apparentTemperature']
 
     min_temp = int(round(results_json['daily']['data'][0]['temperatureMin'],0))
-    min_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMinTime'] + (timezone_offset * 3600))).lstrip("0")
+    #min_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMinTime'] + (timezone_offset * 3600))).lstrip("0")
     min_temp_c = int(round((min_temp - 32)*5/9,0)) 
         
     max_temp = int(round(results_json['daily']['data'][0]['temperatureMax'],0))
-    max_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMaxTime'] + (timezone_offset * 3600))).lstrip("0")
+    #max_temp_time = time.strftime("%I%p",time.gmtime(results_json['daily']['data'][0]['temperatureMaxTime'] + (timezone_offset * 3600))).lstrip("0")
     max_temp_c = int(round((max_temp - 32)*5/9,0))
         
     if feels_like != temp:
-        feels_like = " / Feels like: %s°F %s°C" % (int(round(feels_like,0)), int(round((feels_like- 32)*5/9,0)))
+        if country:
+            feels_like = " / Feels like: %s°C" % (int(round((feels_like- 32)*5/9,0)))
+        else:
+            feels_like = " / Feels like: %s°F" % (int(round(feels_like,0)))
     
     else:
         feels_like = ""
+        
     temp_c = int(round((temp - 32)*5/9,0))
     temp = int(round(temp,0))
 
@@ -177,18 +204,29 @@ def forecast_io(self,e, location=""):
         outlook = "%s %s " % (results_json['minutely']['summary'], results_json['daily']['summary'])
     except:
         outlook = "%s %s" % (results_json['hourly']['summary'], results_json['daily']['summary'])
-        
-
-        
-        #print(temp,humidity,precip_probability,current_summary,wind_speed,wind_direction,cloud_cover,feels_like)
 
 
+    if not country: #If we're in the US, use Fahrenheit, otherwise Celsius    
+        output = "{} / {} / {}°F{} / Humidity: {}% / Wind: {} at {} mph / Cloud Cover: {}% / High: {}°F Low: {}°F / Outlook: {}"
+        e.output = output.format(address, current_summary, temp,
+                          feels_like, humidity,
+                          wind_direction, wind_speed,
+                          cloud_cover, max_temp, min_temp, outlook)
+    else: #Outside of the US
+        outlookt = re.search("(-?\d+)°F", outlook)
+        if outlookt:
+            try:
+                tmp = int(outlookt.group(1))
+                tmpstr = "{}°C".format(int(round((tmp - 32)*5/9,0)))
+                outlook = re.sub("-?\d+°F", tmpstr, outlook)
+            except:
+                pass
 
-    #except:
-    #    return
-    
-    output = "{} / {} / {}°F {}°C{} / Humidity: {}% / Wind: {} at {} mph ({} km/h) / Cloud Cover: {}% / High: {}°F {}°C at {} Low: {}°F {}°C at {} / Outlook: {}"
-    e.output = output.format(address, current_summary, temp, temp_c, feels_like, humidity, wind_direction, wind_speed, wind_speed_kmh, cloud_cover, max_temp, max_temp_c, max_temp_time, min_temp, min_temp_c, min_temp_time, outlook)
+        output = "{} / {} / {}°C{} / Humidity: {}% / Wind: {} at {} km/h / Cloud Cover: {}% / High: {}°C Low: {}°C / Outlook: {}"
+        e.output = output.format(address, current_summary, temp_c,
+                          feels_like, humidity, wind_direction,
+                          wind_speed_kmh, cloud_cover, max_temp_c,
+                          min_temp_c, outlook)
     return e
 
 

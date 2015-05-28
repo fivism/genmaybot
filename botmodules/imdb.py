@@ -51,3 +51,4 @@ def get_imdb(self, e, urlposted=False):
         return e
 get_imdb.command = "!imdb"
 get_imdb.helptext = "Usage: !imdb <movie title>\nExample: !imdb the matrix\nLooks up a given movie title on IMDB and shows the movie rating and a synopsis"
+ 

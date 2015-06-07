@@ -23,17 +23,16 @@ class webServer:
             req = urllib.request.Request("https://www.strava.com/oauth/token")
             req.add_header("Content-Type","application/x-www-form-urlencoded;charset=utf-8")
             #pdb.set_trace()
-            #try:
-            response = urllib.request.urlopen(req,params)
-            response = json.loads(response.read().decode('utf-8'))
-            
-            self.strava_insert_token(state, response['access_token'])
+            try:
+                response = urllib.request.urlopen(req,params)
+                response = json.loads(response.read().decode('utf-8'))
+                
+                self.strava_insert_token(state, response['access_token'])
 
-            cherrypy.engine.exit()
-            return "Strava token exchange completed successfully. You can close this window now."
-            #except:
-            #    cherrypy.engine.exit()
-            #    return "Token exchange with Strava failed. Please try to authenticate again."
+
+                return "Strava token exchange completed successfully. You can close this window now."
+            except:
+                return "Token exchange with Strava failed. Please try to authenticate again."
                 
             
         elif (error != None) or (code==None):

@@ -79,15 +79,16 @@ def strava_get_token(user):
         c.close()
         return False
     
-def strava_oauth_exchange(self):
+def strava_oauth_exchange(self, e):
     strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
     strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]    
     
     
-    nick = "KpaBap"
+    nick = e.nick
     #Send the user off to Strava to authorize us and start local webserver
-    strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://localhost:%s/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.web_port, nick)
-    
+    strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://%s:%s/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.strava_web_host, self.strava_web_port, nick)
+    self.irccontext.privmsg(e.nick, "Load this URL in your web browser and authorize the bot:")
+    self.irccontext.privmsg(e.nick, strava_oauth_url)
 
 
 #this is only needed if we ever have to change the strava token
@@ -119,7 +120,8 @@ def __init__(self):
     strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]
     web_port = 9090
     self.strava_web_port = web_port
-
+    self.strava_web_host = "znc.00id.net"
+    
     ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
     cherrypy.engine.autoreload.on = False
     cherrypy.log.screen=False

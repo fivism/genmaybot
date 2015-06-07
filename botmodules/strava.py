@@ -117,7 +117,7 @@ def __init__(self):
     
     strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
     strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]
-    web_port = int(self.botconfig['webui']['port']
+    web_port = int(self.botconfig['webui']['port'])
     self.strava_web_port = web_port
     self.strava_web_host = "znc.00id.net"
     

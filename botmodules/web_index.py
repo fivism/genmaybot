@@ -156,5 +156,8 @@ def __init__(bot):
                         'server.socket_port': int(bot.botconfig['webui']['port']),
                        })
     cherrypy.tree.mount(Root(bot),"")
-    thread = threading.Thread(target=cherrypy.quickstart, args=(),)
-    thread.start()
+    #wait a little bit for other instances to finish starting
+    time.sleep(1.5)
+    if not cherrypy.server.running:
+        thread = threading.Thread(target=cherrypy.server.start,)
+        thread.start()

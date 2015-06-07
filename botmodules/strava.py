@@ -84,7 +84,7 @@ def strava_oauth_exchange(self, e):
     
     
     nick = e.nick
-    #Send the user off to Strava to authorize us and start local webserver
+    #Send the user off to Strava to authorize us
     strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://%s:%s/strava/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.strava_web_host, self.strava_web_port, nick)
     self.irccontext.privmsg(e.nick, "Load this URL in your web browser and authorize the bot:")
     self.irccontext.privmsg(e.nick, strava_oauth_url)
@@ -114,7 +114,6 @@ set_stravaclientsecret.admincommand = "stravaclientsecret"
 
 def __init__(self):
     """ On init, read the token to a variable, then do a system check which runs upgrades and creates tables. """
-    request_json.token = self.botconfig["APIkeys"]["stravaToken"]
     strava_check_system()  # Check the system for tables and/or upgrades
     
     strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
@@ -136,6 +135,9 @@ def __init__(self):
         thread.start()
 
 def request_json(url):
+    if not request_json.token: #if we haven't found a valid client token, fall back to the public one
+        request_json.token = self.botconfig["APIkeys"]["stravaToken"]
+
     headers = {'Authorization': 'access_token ' + request_json.token}
     req = urllib.request.Request(url, None, headers)
     response = urllib.request.urlopen(req)
@@ -319,7 +321,7 @@ def strava(self, e):
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s. They said Ruby was webscale..." % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (e.input)
     elif e.input:
         athlete_id = strava_get_athlete(e.input)
         if athlete_id:
@@ -331,7 +333,7 @@ def strava(self, e):
                 else:
                     e.output = "Sorry, that is not a valid Strava user."
             except urllib.error.URLError:
-                e.output = "Unable to retrieve rides from Strava ID: %s. They said Ruby was webscale..." % (athlete_id)
+                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (athlete_id)
         else:
             # We still have some sort of string, but it isn't numberic.
             e.output = "Sorry, %s is not a valid Strava ID." % (e.input)
@@ -344,7 +346,7 @@ def strava(self, e):
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s. They said Ruby was webscale..." % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth % (e.input)
     else:
         e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
@@ -397,7 +399,7 @@ def strava_achievements(self, e):
                 else:
                     e.output = "The Strava ID setup for %s is invalid." % (e.input)
             except urllib.error.URLError:
-                e.output = "Unable to retrieve rides from Strava ID: %s. They said Ruby was webscale..." % (e.input)
+                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (e.input)
         else:
             e.output = "%s does not have a valid Strava ID setup. Remember, if it's not on Strava, it didn't happen." % (e.input)
     elif strava_id:
@@ -418,7 +420,7 @@ def strava_achievements(self, e):
             else:
                 e.output = "You do not have a valid Strava ID setup."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s" % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s The user may need to do: !strava auth" % (e.input)
     else:
         e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
@@ -433,13 +435,19 @@ def strava_parent(self, e):
     return e
 
 strava_parent.command = "!strava"
-strava_parent.helptext = "Fetch last ride: \"!strava [optional nick]\", Set your ID: \"!strava set <athelete id>\", Reset your ID: \"!strava reset\", List achievements for a ride: \"!strava achievements <ride id>\""
+strava_parent.helptext = "Fetch last ride: \"!strava [optional nick]\", Set your ID: \"!strava set <athelete id>\", Reset your ID: \"!strava reset\", List achievements for a ride: \"!strava achievements <ride id>\", Allow the bot to read your private rides: \"!strava auth\""
 
 def strava_help(self, e):
     e.output += strava_parent.helptext
     return e
 
 def strava_command_handler(self, e):
+    #set the token for the current user
+    token = strava_get_token(e.nick)
+
+    if token:
+        request_json.token = token
+
     arg_offset = 0
     val_offset = 1
     function = None

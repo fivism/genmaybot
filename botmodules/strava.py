@@ -40,6 +40,14 @@ class webServer:
             cherrypy.engine.exit()
             return "Invalid or empty access code received from Strava. Please try to authenticate again."
             
+    def strava_insert_token(self,user,token):
+        """ Insert a user's strava token into the token table """
+        conn = sqlite3.connect('strava.sqlite')
+        c = conn.cursor()
+        query = "INSERT INTO tokens VALUES (:user, :token)" 
+        c.execute(query, {'user':user, 'token': token})
+        conn.commit()
+        c.close()
 
 # End Web server stuff
 
@@ -50,6 +58,18 @@ def set_stravatoken(line, nick, self, c):
      with open('genmaybot.cfg', 'w') as configfile:
          self.botconfig.write(configfile)
 set_stravatoken.admincommand = "stravatoken"
+
+def set_stravaclientid(line, nick, self, c):
+     self.botconfig["APIkeys"]["stravaClientId"] = line[12:]
+     with open('genmaybot.cfg', 'w') as configfile:
+         self.botconfig.write(configfile)
+set_stravaclientid.admincommand = "stravaclientid"
+
+def set_stravaclientsecret(line, nick, self, c):
+     self.botconfig["APIkeys"]["stravaClientSecret"] = line[12:]
+     with open('genmaybot.cfg', 'w') as configfile:
+         self.botconfig.write(configfile)
+set_stravaclientsecret.admincommand = "stravaclientsecret"
 
 
 def __init__(self):

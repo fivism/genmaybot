@@ -149,11 +149,12 @@ class Root:
 
 def __init__(bot):
     ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
-    cherrypy.config.update({'engine.autoreload_on': False})
+    cherrypy.config.update({'engine.autoreload_on': True})
     cherrypy.log.screen=False
-    cherrypy.server.socket_host = "0.0.0.0"
-
-    cherrypy.server.socket_port = int(bot.botconfig['webui']['port'])
     
-    thread = threading.Thread(target=cherrypy.quickstart, args=(Root(bot),))
+    cherrypy.config.update({'server.socket_host': '0.0.0.0',
+                        'server.socket_port': int(bot.botconfig['webui']['port']),
+                       })
+    cherrypy.tree.mount(Root(bot),"")
+    thread = threading.Thread(target=cherrypy.quickstart, args=(),)
     thread.start()

@@ -122,7 +122,7 @@ def __init__(self):
     self.strava_web_host = "znc.00id.net"
     
     ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
-    cherrypy.engine.autoreload.on = False
+    cherrypy.engine.autoreload.on = True
     cherrypy.log.screen=False
     cherrypy.server.socket_host = "0.0.0.0"
     cherrypy.server.socket_port = web_port

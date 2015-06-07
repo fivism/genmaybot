@@ -313,6 +313,15 @@ def strava_reset_athlete(self, e):
 
 def strava(self, e):
     strava_id = strava_get_athlete(e.nick)
+    #set the token for the current user
+    token = strava_get_token(e.nick)
+
+    if check_strava_token(token):
+        request_json.token = token
+    else:
+        request_json.token = self.botconfig["APIkeys"]["stravaToken"]
+
+
     if e.input.isdigit():
         try:
             if strava_is_valid_user(e.input):
@@ -325,6 +334,14 @@ def strava(self, e):
             e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth (324)" % (e.input)
     elif e.input:
         athlete_id = strava_get_athlete(e.input)
+        #set the token for the provided user, if we have it
+        token = strava_get_token(e.input)
+
+        if check_strava_token(token):
+            request_json.token = token
+        else:
+            request_json.token = self.botconfig["APIkeys"]["stravaToken"]
+
         if athlete_id:
             try:
                 if strava_is_valid_user(athlete_id):
@@ -370,6 +387,14 @@ def strava_achievements(self, e):
 #end beardedw1zard
     """ Get Achievements for a ride. """
     strava_id = strava_get_athlete(e.nick)
+    #set the token for the current user
+    token = strava_get_token(e.nick)
+
+    if check_strava_token(token):
+        request_json.token = token
+    else:
+        request_json.token = self.botconfig["APIkeys"]["stravaToken"]
+
     if e.input.isdigit():
         ride_info = strava_get_ride_extended_info(e.input)
         if ride_info:
@@ -382,6 +407,14 @@ def strava_achievements(self, e):
             e.output = "Sorry, that is an invalid Strava Ride ID."
     elif e.input:
         athlete_id = strava_get_athlete(e.input)
+        #set the token for the provided user, if we have it
+        token = strava_get_token(e.input)
+
+        if check_strava_token(token):
+            request_json.token = token
+        else:
+            request_json.token = self.botconfig["APIkeys"]["stravaToken"]
+
         if athlete_id:
             try:
                 if strava_is_valid_user(athlete_id):
@@ -443,15 +476,6 @@ def strava_help(self, e):
     return e
 
 def strava_command_handler(self, e):
-    #set the token for the current user
-    token = strava_get_token(e.nick)
-
-    
-
-    if check_strava_token(token):
-        request_json.token = token
-    else:
-        request_json.token = self.botconfig["APIkeys"]["stravaToken"]
 
     arg_offset = 0
     val_offset = 1

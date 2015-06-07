@@ -4,6 +4,7 @@ import urllib.request
 import json
 import datetime
 import time
+import cherrypy, threading
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
@@ -21,6 +22,20 @@ def __init__(self):
     """ On init, read the token to a variable, then do a system check which runs upgrades and creates tables. """
     request_json.token = self.botconfig["APIkeys"]["stravaToken"]
     strava_check_system()  # Check the system for tables and/or upgrades
+    
+    strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
+    strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]
+    web_port = 9090
+    self.strava_web_port = web_port
+
+    ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
+    cherrypy.engine.autoreload.on = False
+    cherrypy.log.screen=False
+    cherrypy.server.socket_host = "0.0.0.0"
+    cherrypy.server.socket_port = web_port
+
+    thread = threading.Thread(target=cherrypy.quickstart, args=(webServer(strava_client_secret,strava_client_id),))
+    thread.start()
 
 
 def request_json(url):

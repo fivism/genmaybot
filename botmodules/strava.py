@@ -441,7 +441,7 @@ def strava_command_handler(self, e):
     val_offset = 1
     function = None
 
-    arg_function_dict = {'get':strava, 'set':strava_set_athlete, 'reset':strava_reset_athlete, 'achievements':strava_achievements, 'help':strava_help}
+    arg_function_dict = {'auth':strava_oauth_exchange,'get':strava, 'set':strava_set_athlete, 'reset':strava_reset_athlete, 'achievements':strava_achievements, 'help':strava_help}
     arg_list = list(arg_function_dict.keys())
 
     #EX: "set 123456"

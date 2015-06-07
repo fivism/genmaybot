@@ -50,6 +50,44 @@ class webServer:
         c.close()
 
 # End Web server stuff
+def check_strava_token(token):
+    url = "https://www.strava.com/api/v3/athlete"
+
+    try:
+        headers = {'Authorization': 'Bearer ' + token}
+        req = urllib.request.Request(url, None, headers)
+        response = urllib.request.urlopen(req)
+        response = json.loads(response.read().decode('utf-8'))
+        return True
+    except:
+        return "Current Strava token is invalid. Please try to authenticate again with !strava auth"
+
+def strava_get_token(user):
+    """ Get an token by user """
+    conn = sqlite3.connect('strava.sqlite')
+    c = conn.cursor()
+    query = "SELECT token FROM tokens WHERE user= :user"
+    
+    try:
+        result = c.execute(query, {'user':user}).fetchone()
+    except:
+        return False
+    if (result):
+        c.close()
+        return result[0]
+    else:
+        c.close()
+        return False
+    
+def strava_oauth_exchange(self):
+    strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
+    strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]    
+    
+    
+    nick = "KpaBap"
+    #Send the user off to Strava to authorize us and start local webserver
+    strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://localhost:%s/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.web_port, nick)
+    
 
 
 #this is only needed if we ever have to change the strava token

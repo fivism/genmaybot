@@ -346,7 +346,7 @@ def strava(self, e):
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (e.input)
     else:
         e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e

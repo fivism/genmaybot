@@ -124,8 +124,7 @@ def __init__(self):
     ##Disable cherrypy logging to stdout, bind to all IPs, start in a separate thread
     cherrypy.engine.autoreload.on = True
     cherrypy.log.screen=False
-    cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                        'server.socket_port': web_port})
+    cherrypy.config.update({'server.socket_host': '0.0.0.0','server.socket_port': web_port})
     cherrypy.tree.mount(webServer(strava_client_secert,strava_client_id),"/strava")
 
     #wait a little bit for other instances to finish starting

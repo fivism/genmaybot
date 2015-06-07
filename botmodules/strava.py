@@ -59,7 +59,7 @@ def check_strava_token(token):
         response = json.loads(response.read().decode('utf-8'))
         return True
     except:
-        return "Current Strava token is invalid. Please try to authenticate again with !strava auth"
+        return False
 
 def strava_get_token(user):
     """ Get an token by user """
@@ -446,7 +446,9 @@ def strava_command_handler(self, e):
     #set the token for the current user
     token = strava_get_token(e.nick)
 
-    if token:
+    
+
+    if check_strava_token(token):
         request_json.token = token
     else:
         request_json.token = self.botconfig["APIkeys"]["stravaToken"]

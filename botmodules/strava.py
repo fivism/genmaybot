@@ -99,13 +99,13 @@ def set_stravatoken(line, nick, self, c):
 set_stravatoken.admincommand = "stravatoken"
 
 def set_stravaclientid(line, nick, self, c):
-     self.botconfig["APIkeys"]["stravaClientId"] = line[12:]
+     self.botconfig["APIkeys"]["stravaClientId"] = line[15:]
      with open('genmaybot.cfg', 'w') as configfile:
          self.botconfig.write(configfile)
 set_stravaclientid.admincommand = "stravaclientid"
 
 def set_stravaclientsecret(line, nick, self, c):
-     self.botconfig["APIkeys"]["stravaClientSecret"] = line[12:]
+     self.botconfig["APIkeys"]["stravaClientSecret"] = line[19:]
      with open('genmaybot.cfg', 'w') as configfile:
          self.botconfig.write(configfile)
 set_stravaclientsecret.admincommand = "stravaclientsecret"

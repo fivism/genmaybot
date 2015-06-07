@@ -139,6 +139,7 @@ def request_json(url):
         request_json.token = self.botconfig["APIkeys"]["stravaToken"]
 
     headers = {'Authorization': 'access_token ' + request_json.token}
+    print ("Strava: requesting %s" % url)
     req = urllib.request.Request(url, None, headers)
     response = urllib.request.urlopen(req)
     response = json.loads(response.read().decode('utf-8'))

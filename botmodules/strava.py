@@ -8,6 +8,40 @@ import cherrypy, threading
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
+class webServer:
+
+    def __init__(self,strava_client_secret, strava_client_id): #Get the strava client ID/secrets for the Oauth exchange later
+        self.strava_client_secret = strava_client_secret
+        self.strava_client_id = strava_client_id
+    
+    @cherrypy.expose
+    def strava_token_exchange(self,state=None,code=None,error=None):
+        if code and state:
+            params = urllib.parse.urlencode({'client_id': self.strava_client_id, 'client_secret': self.strava_client_secret, 'code': code})
+            params = params.encode('utf-8')
+            
+            req = urllib.request.Request("https://www.strava.com/oauth/token")
+            req.add_header("Content-Type","application/x-www-form-urlencoded;charset=utf-8")
+            #pdb.set_trace()
+            #try:
+            response = urllib.request.urlopen(req,params)
+            response = json.loads(response.read().decode('utf-8'))
+            
+            self.strava_insert_token(state, response['access_token'])
+
+            cherrypy.engine.exit()
+            return "Strava token exchange completed successfully. You can close this window now."
+            #except:
+            #    cherrypy.engine.exit()
+            #    return "Token exchange with Strava failed. Please try to authenticate again."
+                
+            
+        elif (error != None) or (code==None):
+            cherrypy.engine.exit()
+            return "Invalid or empty access code received from Strava. Please try to authenticate again."
+            
+
+# End Web server stuff
 
 
 #this is only needed if we ever have to change the strava token

@@ -85,7 +85,7 @@ def strava_oauth_exchange(self, e):
     
     nick = e.nick
     #Send the user off to Strava to authorize us and start local webserver
-    strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://%s:%s/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.strava_web_host, self.strava_web_port, nick)
+    strava_oauth_url = "https://www.strava.com/oauth/authorize?client_id=%s&response_type=code&redirect_uri=http://%s:%s/strava/strava_token_exchange&scope=view_private&approval_prompt=auto&state=%s" % (strava_client_id, self.strava_web_host, self.strava_web_port, nick)
     self.irccontext.privmsg(e.nick, "Load this URL in your web browser and authorize the bot:")
     self.irccontext.privmsg(e.nick, strava_oauth_url)
 

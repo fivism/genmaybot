@@ -125,12 +125,14 @@ def __init__(self):
     cherrypy.engine.autoreload.on = True
     cherrypy.log.screen=False
     cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                        'server.socket_port': web_port),
-                       })
+                        'server.socket_port': web_port})
     cherrypy.tree.mount(webServer(strava_client_secert,strava_client_id),"/strava")
-    thread = threading.Thread(target=cherrypy.quickstart, args=(),)
-    thread.start()
 
+    #wait a little bit for other instances to finish starting
+    time.sleep(1.5)
+    if not cherrypy.server.running:
+        thread = threading.Thread(target=cherrypy.server.start,)
+        thread.start()
 
 def request_json(url):
     headers = {'Authorization': 'access_token ' + request_json.token}

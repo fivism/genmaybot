@@ -447,6 +447,8 @@ def strava_command_handler(self, e):
 
     if token:
         request_json.token = token
+    else:
+        request_json.token = self.botconfig["APIkeys"]["stravaToken"]
 
     arg_offset = 0
     val_offset = 1

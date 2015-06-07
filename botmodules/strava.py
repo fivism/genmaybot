@@ -117,7 +117,7 @@ def __init__(self):
     
     strava_client_secret = self.botconfig["APIkeys"]["stravaClientSecret"]
     strava_client_id = self.botconfig["APIkeys"]["stravaClientId"]
-    web_port = 9090
+    web_port = int(self.botconfig['webui']['port']
     self.strava_web_port = web_port
     self.strava_web_host = "znc.00id.net"
     
@@ -125,7 +125,7 @@ def __init__(self):
     cherrypy.engine.autoreload.on = True
     cherrypy.log.screen=False
     cherrypy.config.update({'server.socket_host': '0.0.0.0',
-                        'server.socket_port': web_port,
+                        'server.socket_port': web_port),
                        })
     cherrypy.tree.mount(webServer(strava_client_secert,strava_client_id),"/strava")
     thread = threading.Thread(target=cherrypy.quickstart, args=(),)

@@ -128,7 +128,7 @@ def __init__(self):
                         'server.socket_port': web_port,
                        })
     cherrypy.tree.mount(webServer(strava_client_secert,strava_client_id),"/strava")
-    thread = threading.Thread(target=cherrypy.quickstart, args=(),))
+    thread = threading.Thread(target=cherrypy.quickstart, args=(),)
     thread.start()
 
 

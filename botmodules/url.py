@@ -142,8 +142,16 @@ def get_title(self, e, url):
             pass
     elif page:
         title = "Title: " + page.find('title').string
-
-    return title
+        try:
+            meta_title = "Title: " + page.find('meta', attrs={'property': "og:title"}).get("content")
+        except:
+            meta_title = False
+        
+        
+    if meta_title:
+        return meta_title
+    else:
+        return title
 
 
 def last_link(self, e):

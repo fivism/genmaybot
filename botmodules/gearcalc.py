@@ -59,7 +59,7 @@ class GearCalc:
 		return return_list
 
 	def tokenize (self, calc_string):
-		return re.split(r'\W+', calc_string)
+		return re.split('\s', calc_string)
 
 	def solve (self):
 		if self.isAlreadySolved():
@@ -182,9 +182,6 @@ class GearCalc:
 			m = re.match(r"^(\d{2})-(\d{3})$", token)
 			if m:
 				return self.calculateErtro(int(m.group(1)), int(m.group(2)))
-			m = re.match(r"^(\d{3})-(\d{2})$", token)
-			if m:
-				return self.calculateErtro(int(m.group(2)), int(m.group(1)))
 		return self.default_wheel_circumference
 
 	def calculateErtro(self, tire_width, rim_diameter):

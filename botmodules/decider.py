@@ -3,7 +3,7 @@ def decider(self, e):
     if "red dot" in e.input.lower():  
         self.irccontext.mode(e.source, '+b {}'.format(e.hostmask))
         self.irccontext.kick(e.source, e.nick, "Congratulations! You found the word of the day, courtesy of red dot!")
-    regex = "^bot" + "[^\s]? (.*) or ([^?]*)"
+    regex = "^!bot\s(.*?)\s+or\s+([^?\n]*)$"
     result = re.search(regex, e.input)
     if result:
         if (random.randint(0,1) == 0):

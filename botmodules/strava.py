@@ -330,7 +330,7 @@ def strava(self, e):
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth (324)" % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (e.input)
     elif e.input:
         athlete_id = strava_get_athlete(e.input)
         #set the token for the provided user, if we have it
@@ -350,7 +350,7 @@ def strava(self, e):
                 else:
                     e.output = "Sorry, that is not a valid Strava user."
             except urllib.error.URLError:
-                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth (336)" % (athlete_id)
+                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (athlete_id)
         else:
             # We still have some sort of string, but it isn't numberic.
             e.output = "Sorry, %s is not a valid Strava ID." % (e.input)
@@ -363,9 +363,9 @@ def strava(self, e):
             else:
                 e.output = "Sorry, that is not a valid Strava user."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth (349)" % (strava_id)
+            e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (strava_id)
     else:
-        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
+        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Also run !strava auth if you have Strava privacy enabled. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
 
 
@@ -432,7 +432,7 @@ def strava_achievements(self, e):
                 else:
                     e.output = "The Strava ID setup for %s is invalid." % (e.input)
             except urllib.error.URLError:
-                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth (402)" % (e.input)
+                e.output = "Unable to retrieve rides from Strava ID: %s. The user may need to do: !strava auth" % (e.input)
         else:
             e.output = "%s does not have a valid Strava ID setup. Remember, if it's not on Strava, it didn't happen." % (e.input)
     elif strava_id:
@@ -453,9 +453,9 @@ def strava_achievements(self, e):
             else:
                 e.output = "You do not have a valid Strava ID setup."
         except urllib.error.URLError:
-            e.output = "Unable to retrieve rides from Strava ID: %s The user may need to do: !strava auth (423)" % (e.input)
+            e.output = "Unable to retrieve rides from Strava ID: %s The user may need to do: !strava auth" % (e.input)
     else:
-        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Remember, if it's not on Strava, it didn't happen." % (e.nick)
+        e.output = "Sorry %s, you don't have a Strava ID setup yet, please enter one with the !strava set [id] command. Also run !strava auth if you have Strava privacy enabled. Remember, if it's not on Strava, it didn't happen." % (e.nick)
     return e
 
 
@@ -538,7 +538,7 @@ def strava_extract_latest_ride(response, e, athlete_id=None):
         else:
             return "Sorry %s, an error has occured attempting to retrieve the most recent ride's details. They said Ruby was webscale..." % (e.nick)
     else:
-        return "Sorry %s, no rides have been recorded yet. Remember, if it's not on Strava, it didn't happen." % (e.nick)
+        return "Sorry %s, no rides have been recorded yet. You may need to run '!strava auth' Remember, if it's not on Strava, it didn't happen." % (e.nick)
 
 
 def strava_ride_to_string(recent_ride, athlete_id=None): #if the athlete ID is missing we can default to mph

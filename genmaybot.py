@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 #
-#To run this bot use the following command:
+# To run this bot use the following command:
 #
-#  python genmaybot.py irc.0id.net "#chan" Nickname
+# python genmaybot.py irc.0id.net "#chan" Nickname
 #
 
-### look in to !seen functionality
+# look in to !seen functionality
 # |- on_join, on_part, on_kick, on_nick, on_quit
 # |---use on_whoreply to confirm the users are who their nick is?
 # |---check who is in the channel when the bot joins?
@@ -14,13 +14,19 @@
 # | db: user_knownhostmasks: user | hostmask
 # (hostmask might be username | hostmask where username@hostmask
 #
-### random descision maker?
+# random descision maker?
 # test comment please ignore
 
 
 from ircbot import SingleServerIRCBot
-import time, imp
-import sys, os, socket, configparser, threading, traceback
+import time
+import imp
+import sys
+import os
+import socket
+import configparser
+import threading
+import traceback
 
 
 socket.setdefaulttimeout(5)
@@ -29,7 +35,8 @@ socket.setdefaulttimeout(5)
 class TestBot(SingleServerIRCBot):
 
     def __init__(self, channel, nickname, server, port=6667):
-        SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname, 15)
+        SingleServerIRCBot.__init__(
+            self, [(server, port)], nickname, nickname, 15)
         self.channel = channel
         self.doingcommand = False
         self.botnick = nickname
@@ -44,7 +51,6 @@ class TestBot(SingleServerIRCBot):
 
         self.keepalive_nick = "ChanServ"
         self.alive = True
-
 
     def load_config(self):
         config = configparser.ConfigParser()
@@ -67,17 +73,18 @@ class TestBot(SingleServerIRCBot):
         c.nick(c.get_nickname() + "_")
 
     def on_kick(self, c, e):
-        #attempt to rejoin any channel we're kicked from
+        # attempt to rejoin any channel we're kicked from
         if e.arguments()[0][0:6] == c.get_nickname():
             c.join(e.target())
 
     def on_disconnect(self, c, e):
         print("DISCONNECT: " + str(e.arguments()))
-        
-        
+
     def on_welcome(self, c, e):
-        c.privmsg("NickServ", "identify " + self.botconfig['irc']['identpassword'])
-        c.oper(self.botconfig['irc']['opernick'], self.botconfig['irc']['operpassword'])
+        c.privmsg(
+            "NickServ", "identify " + self.botconfig['irc']['identpassword'])
+        c.oper(self.botconfig['irc']['opernick'],
+               self.botconfig['irc']['operpassword'])
         c.join(self.channel)
         self.alerts(c)
         self.irccontext = c
@@ -85,15 +92,14 @@ class TestBot(SingleServerIRCBot):
         self.last_keepalive = time.time()
 
         self.keepalive(c)
-        
-       
-    
+
     def on_youreoper(self, c, e):
         print ("I'm an IRCop bitches!")
 
-    def on_ison(self,c,e):
+    def on_ison(self, c, e):
 
-        ison_reply = e.arguments()[0][:-1] #strip out extraneous space at the end
+        # strip out extraneous space at the end
+        ison_reply = e.arguments()[0][:-1]
 
         #print ("Got ISON reply: %s" % e.arguments()[0])
 
@@ -104,10 +110,12 @@ class TestBot(SingleServerIRCBot):
     def keepalive(self, irc_context):
         if time.time() - self.last_keepalive > 90:
             if not self.alive:
-                print ("%s: I think we are dead, reconnecting."  % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+                print ("%s: I think we are dead, reconnecting." %
+                       time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
                 self.jump_server()
                 return
-            print ("%s: Keepalive reply not received, sending request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+            print ("%s: Keepalive reply not received, sending request" %
+                   time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
             # Send ISON command on configured nick
             irc_context.ison(self.keepalive_nick)
             self.alive = False
@@ -115,18 +123,18 @@ class TestBot(SingleServerIRCBot):
             #print ("%s: Waiting to send keepalive request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
             pass
 
-        self.keepaliveTimer = threading.Timer(30, self.keepalive, [irc_context])
+        self.keepaliveTimer = threading.Timer(
+            30, self.keepalive, [irc_context])
         self.keepaliveTimer.start()
-        
-    
+
     def on_whoishostline(self, c, e):
 
         try:
-            
-            self.whoisIP_reply_handler(self, self.whoisIP_sourceEvent, e.arguments()[1].split()[-1],"",True)
-        except:
-            pass #No whois host line reply handler
 
+            self.whoisIP_reply_handler(
+                self, self.whoisIP_sourceEvent, e.arguments()[1].split()[-1], "", True)
+        except:
+            pass  # No whois host line reply handler
 
     def on_pubmsg(self, c, e):
         self.process_line(c, e)
@@ -144,21 +152,22 @@ class TestBot(SingleServerIRCBot):
 
     def on_whoreply(self, c, e):
         nick = e.arguments()[4]
-        
+
         # The bot does a whois on itself to find its cloaked hostname after it connects
-        # This if statement handles that situation and stores the data accordingly        
+        # This if statement handles that situation and stores the data
+        # accordingly
         if nick == c.get_nickname():
             self.realname = e.arguments()[1]
             self.hostname = e.arguments()[2]
-            #The protocol garbage before the real message is 
+            # The protocol garbage before the real message is
             #:<nick>!<realname>@<hostname> PRIVMSG <target> :
             return
-        
+
         line = self.admincommand
         command = line.split(" ")[0]
         self.admincommand = ""
         try:
-            #if e.arguments()[5].find("r") != -1 and line != "":
+            # if e.arguments()[5].find("r") != -1 and line != "":
             say = self.admincommands[command](line, nick, self, c)
             say = say.split("\n")
             for line in say:
@@ -168,16 +177,16 @@ class TestBot(SingleServerIRCBot):
             traceback.print_exc()
             print("admin exception: " + line + " : " + str(inst))
 
-    def process_line(self, c, ircevent, private = False):
+    def process_line(self, c, ircevent, private=False):
         if self.doingcommand:
             return
         self.doingcommand = True
 
         line = ircevent.arguments()[0]
         from_nick = ircevent.source().split("!")[0]
-        hostmask = ircevent.source()[ircevent.source().find("!")+1:]
+        hostmask = ircevent.source()[ircevent.source().find("!") + 1:]
         command = line.split(" ")[0].lower()
-        args = line[len(command)+1:].strip()
+        args = line[len(command) + 1:].strip()
         if private:
             linesource = from_nick
         else:
@@ -186,24 +195,27 @@ class TestBot(SingleServerIRCBot):
         e = None
         etmp = []
 
-
         try:
-            #commands names are defined by the module as function.command = "!commandname"
+            # commands names are defined by the module as function.command =
+            # "!commandname"
             if command in self.bangcommands and (self.commandaccess(command) or from_nick in self.botadmins):
                 e = self.botEvent(linesource, from_nick, hostmask, args)
-                e.botnick = c.get_nickname() #store the bot's nick in the event in case we need it.
+                # store the bot's nick in the event in case we need it.
+                e.botnick = c.get_nickname()
 
                 if linesource in self.channels and hasattr(self.bangcommands[command], 'privateonly'):
                     self.doingcommand = False
                     return
                 etmp.append(self.bangcommands[command](self, e))
 
-            #lineparsers take the whole line and nick for EVERY line
-            #ensure the lineparser function is short and simple. Try to not to add too many of them
-            #Multiple lineparsers can output data, leading to multiple 'say' lines
+            # lineparsers take the whole line and nick for EVERY line
+            # ensure the lineparser function is short and simple. Try to not to add too many of them
+            # Multiple lineparsers can output data, leading to multiple 'say'
+            # lines
             for command in self.lineparsers:
                 e = self.botEvent(linesource, from_nick, hostmask, line)
-                e.botnick = c.get_nickname()  # store the bot's nick in the event in case we need it.
+                # store the bot's nick in the event in case we need it.
+                e.botnick = c.get_nickname()
                 if linesource in self.channels and hasattr(command, 'privateonly'):
                     continue
                 etmp.append(command(self, e))
@@ -212,7 +224,8 @@ class TestBot(SingleServerIRCBot):
             for e in etmp:
                 if e and e.output:
                     if firstpass and not e.source == e.nick and not e.nick in self.botadmins:
-                        if self.isspam(e.hostmask, e.nick): break
+                        if self.isspam(e.hostmask, e.nick):
+                            break
                         firstpass = False
                     self.botSay(e)
 
@@ -233,7 +246,8 @@ class TestBot(SingleServerIRCBot):
                     else:
                         self.irccontext.privmsg(botevent.source, line)
         except Exception as inst:
-            print("bot failed trying to say " + str(botevent.output) + "\n" + str(inst))
+            print("bot failed trying to say " +
+                  str(botevent.output) + "\n" + str(inst))
             traceback.print_exc()
 
     def loadmodules(self):
@@ -276,15 +290,19 @@ class TestBot(SingleServerIRCBot):
         commands, botalerts, lineparsers, admincommands = "", "", "", ""
 
         if self.bangcommands:
-            commands = 'Loaded command modules: %s' % list(self.bangcommands.keys())
+            commands = 'Loaded command modules: %s' % list(
+                self.bangcommands.keys())
         else:
             commands = "No command modules loaded!"
         if self.botalerts:
-            botalerts = 'Loaded alerts: %s' % ', '.join((command.__name__ for command in self.botalerts))
+            botalerts = 'Loaded alerts: %s' % ', '.join(
+                (command.__name__ for command in self.botalerts))
         if self.lineparsers:
-            lineparsers = 'Loaded line parsers: %s' % ', '.join((command.__name__ for command in self.lineparsers))
+            lineparsers = 'Loaded line parsers: %s' % ', '.join(
+                (command.__name__ for command in self.lineparsers))
         if self.admincommands:
-            admincommands = 'Loaded admin commands: %s' % list(self.admincommands.keys())
+            admincommands = 'Loaded admin commands: %s' % list(
+                self.admincommands.keys())
         return commands + "\n" + botalerts + "\n" + lineparsers + "\n" + admincommands
 
     def isbotadmin(self, nick):
@@ -302,22 +320,22 @@ class TestBot(SingleServerIRCBot):
                     return True
             elif self.commandaccesslist[command] == "Disabled":
                 return False
-        else: #if there's no entry it's assumed to be enabled
+        else:  # if there's no entry it's assumed to be enabled
             return True
 
     def isspam(self, user, nick):
-	#Set the number of allowed lines to whatever is in the .cfg file
+        # Set the number of allowed lines to whatever is in the .cfg file
         allow_lines = int(self.botconfig['irc']['spam_protect_lines'])
 
-        #Clean up ever-growing spam dictionary
+        # Clean up ever-growing spam dictionary
         cleanupkeys = []
         for key in self.spam:
-            if (time.time() - self.spam[key]['last']) > (24*3600): #anything older than 24 hours
+            # anything older than 24 hours
+            if (time.time() - self.spam[key]['last']) > (24 * 3600):
                 cleanupkeys.append(key)
         for key in cleanupkeys:
             self.spam.pop(key)
-        #end clean up job         
-            
+        # end clean up job
 
         if not (user in self.spam):
             self.spam[user] = {}
@@ -338,7 +356,8 @@ class TestBot(SingleServerIRCBot):
 
             if not ((self.spam[user]['last'] - self.spam[user]['first']) > self.spam[user]['limit']):
                 bantime = self.spam[user]['limit'] + 15
-                print("%s : %s band %s seconds" % (time.strftime("%d %b %Y %H:%M:%S", time.localtime()), nick, bantime))
+                print("%s : %s band %s seconds" % (
+                    time.strftime("%d %b %Y %H:%M:%S", time.localtime()), nick, bantime))
                 return True
             else:
                 self.spam[user]['first'] = 0
@@ -349,7 +368,7 @@ class TestBot(SingleServerIRCBot):
     def alerts(self, context):
         try:
             for command in self.botalerts:
-                if command.alert: #check if alert is actually enabled
+                if command.alert:  # check if alert is actually enabled
                     say = command()
                     if say:
                         for channel in self.channels:
@@ -363,6 +382,7 @@ class TestBot(SingleServerIRCBot):
         self.t.start()
 
     class botEvent:
+
         def __init__(self, source, nick, hostmask, inpt, output="", notice=False):
             self.source = source
             self.nick = nick
@@ -373,7 +393,7 @@ class TestBot(SingleServerIRCBot):
 
 
 def main():
-    #print sys.argv
+    # print sys.argv
 
     if len(sys.argv) != 4:
 
@@ -394,7 +414,8 @@ def main():
                 port = 6667
             channel = config['irc']['channels']
         else:
-            print("Usage: bot.py <server[:port]> <channel> <nickname> \nAlternatively configure the server in the .cfg")
+            print(
+                "Usage: bot.py <server[:port]> <channel> <nickname> \nAlternatively configure the server in the .cfg")
             sys.exit(1)
 
     else:
@@ -414,15 +435,18 @@ def main():
     bot = TestBot(channel, nickname, server, port)
     bot.start()
 
-#this bullshit is necessary because sys.stdout doesn't write the file continuously
+# this bullshit is necessary because sys.stdout doesn't write the file
+# continuously
+
+
 class simpleLogger():
 
-    def __init__(self,logfile):
+    def __init__(self, logfile):
         self.logfile = logfile
-        open(logfile,"w").write("") ##clear out any previous contents
+        open(logfile, "w").write("")  # clear out any previous contents
 
-    def write(self,logtext):
-        logfile = open(self.logfile,"a")
+    def write(self, logtext):
+        logfile = open(self.logfile, "a")
         logfile.write(logtext)
         logfile.close()
         return 0
@@ -433,5 +457,3 @@ class simpleLogger():
 
 if __name__ == "__main__":
     main()
-
-

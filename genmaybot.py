@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 #
 # To run this bot use the following command:
 #
@@ -28,7 +28,6 @@ import configparser
 import threading
 import traceback
 
-
 socket.setdefaulttimeout(5)
 
 
@@ -49,7 +48,7 @@ class TestBot(SingleServerIRCBot):
         self.load_config()
         print(self.loadmodules())
 
-        self.keepalive_nick = "ChanServ"
+        self.keepalive_nick = "OperServ"
         self.alive = True
 
     def load_config(self):
@@ -72,6 +71,9 @@ class TestBot(SingleServerIRCBot):
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
 
+        c.privmsg("NickServ", "RECOVER %s %s" %
+                  (self.botnick, self.botconfig['irc']['identpassword']))
+
     def on_kick(self, c, e):
         # attempt to rejoin any channel we're kicked from
         if e.arguments()[0][0:6] == c.get_nickname():
@@ -87,21 +89,23 @@ class TestBot(SingleServerIRCBot):
                self.botconfig['irc']['operpassword'])
         c.join(self.channel)
         self.alerts(c)
+        self.nick_recover(c)
         self.irccontext = c
         c.who(c.get_nickname())
+
         self.last_keepalive = time.time()
 
         self.keepalive(c)
 
     def on_youreoper(self, c, e):
-        print ("I'm an IRCop bitches!")
+        print("I'm an IRCop bitches!")
 
     def on_ison(self, c, e):
 
         # strip out extraneous space at the end
         ison_reply = e.arguments()[0][:-1]
 
-        #print ("Got ISON reply: %s" % e.arguments()[0])
+        # print ("Got ISON reply: %s" % e.arguments()[0])
 
         if ison_reply == self.keepalive_nick:
             self.last_keepalive = time.time()
@@ -110,17 +114,18 @@ class TestBot(SingleServerIRCBot):
     def keepalive(self, irc_context):
         if time.time() - self.last_keepalive > 90:
             if not self.alive:
-                print ("%s: I think we are dead, reconnecting." %
-                       time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
+                print("%s: I think we are dead, reconnecting." %
+                      time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
                 self.jump_server()
+                self.alive = True
                 return
-            print ("%s: Keepalive reply not received, sending request" %
-                   time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
+            print("%s: Keepalive reply not received, sending request" %
+                  time.strftime("%m/%d/%y %H:%M:%S", time.localtime()))
             # Send ISON command on configured nick
             irc_context.ison(self.keepalive_nick)
             self.alive = False
         else:
-            #print ("%s: Waiting to send keepalive request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
+            # print ("%s: Waiting to send keepalive request" % time.strftime("%m/%d/%y %H:%M:%S",time.localtime()))
             pass
 
         self.keepaliveTimer = threading.Timer(
@@ -128,7 +133,6 @@ class TestBot(SingleServerIRCBot):
         self.keepaliveTimer.start()
 
     def on_whoishostline(self, c, e):
-
         try:
 
             self.whoisIP_reply_handler(
@@ -139,6 +143,30 @@ class TestBot(SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         self.process_line(c, e)
 
+    def on_privnotice(self, c, e):
+        from_nick = e.source().split("!")[0]
+        line = e.arguments()[0].strip()
+
+        if from_nick == "NickServ":
+            if line.find("This nickname is registered and protected.") != -1:
+                c.privmsg(
+                    "NickServ", "identify " + self.botconfig['irc']['identpassword'])
+            # These are responses from NickServ when running the RECOVER
+            # command
+            elif line.find("Ghost with your nick has been killed.") != -1 or line.find("No one is using your nick, and services are not holding it.") != -1:
+                c.nick(self.botconfig['irc']['nick'])
+
+        if from_nick.find(".") == -1:  # Filter out server NOTICEs
+            self.mirror_pm(c, from_nick, line, "NOTICE")
+
+    def on_ctcp(self, c, e):
+        self._on_ctcp(c, e)
+
+        if not e.arguments()[0] == "ACTION":  # ignore /me messages
+            from_nick = e.source().split("!")[0]
+            line = " ".join(e.arguments())
+            self.mirror_pm(c, from_nick, line, "CTCP")
+
     def on_privmsg(self, c, e):
         from_nick = e.source().split("!")[0]
         line = e.arguments()[0].strip()
@@ -148,7 +176,21 @@ class TestBot(SingleServerIRCBot):
             self.admincommand = line
             c.who(from_nick)
 
+        # Mirror the PM to the list of admin nicks
+        self.mirror_pm(c, from_nick, line, "PM")
+
+        # This sends the PM onward for processing through command parsers
         self.process_line(c, e, True)
+
+    def mirror_pm(self, context, from_nick, line, msgtype="PM"):
+
+        output = "%s: [%s] %s" % (msgtype, from_nick, line)
+
+        try:
+            for nick in self.pm_monitor_nicks:
+                context.privmsg(nick, output)
+        except:
+            return
 
     def on_whoreply(self, c, e):
         nick = e.arguments()[4]
@@ -167,11 +209,11 @@ class TestBot(SingleServerIRCBot):
         command = line.split(" ")[0]
         self.admincommand = ""
         try:
-            # if e.arguments()[5].find("r") != -1 and line != "":
-            say = self.admincommands[command](line, nick, self, c)
-            say = say.split("\n")
-            for line in say:
-                c.privmsg(nick, line)
+            if e.arguments()[5].find("r") != -1 and line != "":
+                say = self.admincommands[command](line, nick, self, c)
+                say = say.split("\n")
+                for line in say:
+                    c.privmsg(nick, line)
 
         except Exception as inst:
             traceback.print_exc()
@@ -187,7 +229,15 @@ class TestBot(SingleServerIRCBot):
         hostmask = ircevent.source()[ircevent.source().find("!") + 1:]
         command = line.split(" ")[0].lower()
         args = line[len(command) + 1:].strip()
-        if private:
+
+        notice = False
+
+        try:
+            notice = hasattr(self.bangcommands[command], 'privateonly')
+        except:
+            pass
+
+        if private or notice:
             linesource = from_nick
         else:
             linesource = ircevent.target()
@@ -203,9 +253,6 @@ class TestBot(SingleServerIRCBot):
                 # store the bot's nick in the event in case we need it.
                 e.botnick = c.get_nickname()
 
-                if linesource in self.channels and hasattr(self.bangcommands[command], 'privateonly'):
-                    self.doingcommand = False
-                    return
                 etmp.append(self.bangcommands[command](self, e))
 
             # lineparsers take the whole line and nick for EVERY line
@@ -216,8 +263,6 @@ class TestBot(SingleServerIRCBot):
                 e = self.botEvent(linesource, from_nick, hostmask, line)
                 # store the bot's nick in the event in case we need it.
                 e.botnick = c.get_nickname()
-                if linesource in self.channels and hasattr(command, 'privateonly'):
-                    continue
                 etmp.append(command(self, e))
 
             firstpass = True
@@ -241,6 +286,7 @@ class TestBot(SingleServerIRCBot):
         try:
             if botevent.output:
                 for line in botevent.output.split("\n"):
+                    line = self.tools['decode_htmlentities'](line)
                     if botevent.notice:
                         self.irccontext.notice(botevent.source, line)
                     else:
@@ -364,6 +410,22 @@ class TestBot(SingleServerIRCBot):
                 self.spam[user]['count'] = 1
                 self.spam[user]['limit'] = 30
                 return False
+
+    def nick_recover(self, context):
+        # Check if our nickname is different than configured for some reason
+        if context.get_nickname() != self.botconfig['irc']['nick']:
+
+            # Try to recover using NickServ
+            context.privmsg("NickServ", "RECOVER %s %s" %
+                            (self.botconfig['irc']['nick'], self.botconfig['irc']['identpassword']))
+            # The actual nick renaming happens when NickServ tells us the nick
+            # has been recovered.
+
+        # Start a timer thread to keep checking and tryng to recover our
+        # nickname
+        self.nick_recover_thread = threading.Timer(
+            5, self.nick_recover, [context])
+        self.nick_recover_thread.start()
 
     def alerts(self, context):
         try:
